@@ -15,6 +15,7 @@ venv/
 # data and local artefacts (raw datasets and caches are never committed)
 data/raw/
 data/interim/
+data/splits/
 *.npz
 *.npy
 *.tar

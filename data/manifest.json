@@ -1,0 +1,26 @@
+{
+  "bloodmnist": {
+    "bytes": 35461855,
+    "file": "bloodmnist.npz",
+    "md5": "7053d0359d879ad8a5505303e11de1dc",
+    "md5_checked_against_zenodo": true,
+    "sha256": "062023e186f537e26b3c21ea3b2614ddfc475e8a14825dfd20663bbb7e37bddc",
+    "source": "https://zenodo.org/records/10519652"
+  },
+  "organamnist": {
+    "bytes": 38247708,
+    "file": "organamnist.npz",
+    "md5": "68e3f8846a6bd62f0c9bf841c0d9eacc",
+    "md5_checked_against_zenodo": true,
+    "sha256": "7c8c8b0753e2c0d7f70928817eac02be7cbb09f6beff4346e9d0ea79ecb598bd",
+    "source": "https://zenodo.org/records/10519652"
+  },
+  "pathmnist": {
+    "bytes": 205615438,
+    "file": "pathmnist.npz",
+    "md5": "a8b06965200029087d5bd730944a56c1",
+    "md5_checked_against_zenodo": true,
+    "sha256": "81823f52dc622e69db2db4c72f8e8e617938dd6864d3c1f23d4e49724a28ea72",
+    "source": "https://zenodo.org/records/10519652"
+  }
+}

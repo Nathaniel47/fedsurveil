@@ -2,7 +2,7 @@
 
 A simulation of federated learning across 5–20 clinics or field sites. It trains one image classifier without pooling the raw images, and compares FedAvg, FedProx and SCAFFOLD against central training. It adds differential privacy, a simulated secure aggregation, a membership-inference check and a communication-cost analysis, with a Streamlit dashboard.
 
-Status: repo setup done (step 2); no experiments yet. See [PLAN.md](PLAN.md) for the design.
+Status: repo setup (step 2) and data pipeline (step 3) done; no experiments yet. See [PLAN.md](PLAN.md) for the design.
 
 This is a single-machine simulation on tiny public images. It makes no clinical claims, and its secure aggregation is simulated masking, not real cryptography.
 
@@ -31,6 +31,17 @@ Docker: `docker compose up` serves the dashboard on http://localhost:8501.
 ## Training (Kaggle, Colab or a local GPU)
 
 Training needs PyTorch, Opacus and Flower: `pip install -r requirements-ml.txt`. Runs write JSONL logs to `runs/`, and the dashboard reads those. Notebook runners live in `notebooks/`.
+
+## Build the data
+
+```bash
+python -m fedsurveil.data.fetch     # MedMNIST 28 px, about 280 MB, md5 checked against Zenodo
+python -m fedsurveil.data.prepare   # seeded Dirichlet site splits -> data/splits/ (gitignored)
+python -m fedsurveil.data.report    # -> results/data_report.md
+```
+
+Raw files and split indices are gitignored. The repo holds checksums (`data/manifest.json`), one short hash per split (`data/split_digests.json`) and the report ([results/data_report.md](results/data_report.md)).
+IP102 is a manual 3 GB download: get `ip102_v1.1` from the [IP102 repo](https://github.com/xpwu95/IP102), extract it, then run `python -m fedsurveil.data.ip102 --root <folder>` to build the 10-class 64 px subset, and re-run `prepare` and `report`.
 
 ## Data and licences (checked 2026-11-18)
 

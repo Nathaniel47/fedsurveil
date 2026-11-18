@@ -20,3 +20,21 @@ Training saves logs to files and the dashboard only reads them. That is why a lo
 **How to check it works.** Create a virtual environment, run `pip install -r requirements-dev.txt`, then `pytest` and `ruff check .`. All should pass.
 
 **Reading.** The pre-commit documentation (pre-commit.com) intro page: hooks in five minutes.
+
+## Step 3: Data pipeline
+
+**What was built.** Four small scripts in `fedsurveil/data/`. `fetch` downloads PathMNIST, BloodMNIST and OrganAMNIST (about 280 MB) and checks each file against the checksum Zenodo publishes. `ip102` turns the manual IP102 download into a small 10-class, 64 px file. `partition` splits a training set across simulated sites. `prepare` saves those splits for every dataset, three alpha values and three seeds (27 splits for the three MedMNIST sets). `report` writes `results/data_report.md`.
+
+**What "non-IID" means here.** In real federated learning each site sees a different slice of the world: one clinic sees mostly one disease. We imitate that with a Dirichlet distribution. A small alpha (0.1) gives each site a few dominant classes (on PathMNIST the biggest class is on average 66% of a site's images). A large alpha (100) makes every site look like the whole dataset (15%). Site sizes also differ (smallest site 4,356 images, largest 15,464 at alpha 100 on PathMNIST), because real sites are never the same size.
+
+**Why only the training set is split.** Validation and test sets stay whole and global. Every method (FedAvg, FedProx, SCAFFOLD and the central baseline) is scored on the same test images, so the comparison is fair.
+
+**Why the repo holds hashes, not indices.** A split is rebuilt from its seed in seconds. `data/split_digests.json` stores a short hash per split so you can check you rebuilt the same one, without committing hundreds of thousands of numbers.
+
+**Problems the report found.** BloodMNIST has 8 duplicate training images and 5 training images that also appear in the test set. That is a small leak (5 of 3,421 test images, 0.15%), but it is real, so it is recorded rather than hidden, and results on BloodMNIST should be read with it in mind. PathMNIST and OrganAMNIST showed no overlap. OrganAMNIST has a 4.5x gap between its largest and smallest class, so macro-F1 is reported next to accuracy.
+
+**Not done yet.** IP102 is not downloaded: it is 3 GB from Google Drive and only about 9.7 GB of disk was free. The loader and subset builder are tested on synthetic images, but no real IP102 numbers exist yet.
+
+**How to check it.** `pytest` (16 tests: splits are disjoint, cover every image, repeat exactly for the same seed, get more skewed as alpha falls, and detect a corrupted file), then the three commands in the README.
+
+**Reading.** Hsu et al. 2019, "Measuring the Effects of Non-Identical Data Distribution for Federated Visual Classification" (arXiv): the paper that introduced this Dirichlet split.

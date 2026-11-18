@@ -7,3 +7,4 @@ flwr>=1.9
 # medmnist 3.x changed the available image sizes; stay on 2.x so the data matches PLAN.md
 medmnist>=2.2.4,<3
 scikit-learn>=1.4
+pillow>=10
