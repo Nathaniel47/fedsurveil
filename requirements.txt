@@ -1,0 +1,5 @@
+# Runtime for the Streamlit dashboard (reads logged runs; no torch, no GPU)
+streamlit>=1.35
+plotly>=5.20
+numpy>=1.26
+pandas>=2.2

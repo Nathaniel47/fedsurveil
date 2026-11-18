@@ -1,0 +1,46 @@
+# FedSurveil: Privacy-Preserving Federated Surveillance
+
+A simulation of federated learning across 5–20 clinics or field sites. It trains one image classifier without pooling the raw images, and compares FedAvg, FedProx and SCAFFOLD against central training. It adds differential privacy, a simulated secure aggregation, a membership-inference check and a communication-cost analysis, with a Streamlit dashboard.
+
+Status: repo setup done (step 2); no experiments yet. See [PLAN.md](PLAN.md) for the design.
+
+This is a single-machine simulation on tiny public images. It makes no clinical claims, and its secure aggregation is simulated masking, not real cryptography.
+
+## Run locally (laptop: tests and the dashboard, no GPU)
+
+Windows (PowerShell):
+```powershell
+py -3.11 -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements-dev.txt
+pytest
+streamlit run app/dashboard.py
+```
+
+macOS / Linux:
+```bash
+python3.11 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements-dev.txt
+pytest
+streamlit run app/dashboard.py
+```
+
+Docker: `docker compose up` serves the dashboard on http://localhost:8501.
+
+## Training (Kaggle, Colab or a local GPU)
+
+Training needs PyTorch, Opacus and Flower: `pip install -r requirements-ml.txt`. Runs write JSONL logs to `runs/`, and the dashboard reads those. Notebook runners live in `notebooks/`.
+
+## Data and licences (checked 2026-11-18)
+
+| Data / library | Licence | Use here |
+|---|---|---|
+| MedMNIST v2 data | CC-BY-4.0, except DermaMNIST (CC-BY-NC-4.0, not used); not for clinical use | PathMNIST, BloodMNIST, OrganAMNIST |
+| MedMNIST code | Apache-2.0 | `pip install medmnist` (kept below 3.0) |
+| IP102 | "Free for academic usage"; other uses need permission from the authors | 10–20 class subset, 64 px; not redistributed, no images in the public dashboard |
+| Flower, Opacus | Apache-2.0 (to confirm at install) | Flower demo run; DP-SGD |
+
+## Responsible use
+
+Public benchmark data only. The study measures model accuracy, privacy leakage and communication cost. It is not a surveillance tool: the name refers to disease and pest surveillance by simulated health and field sites.

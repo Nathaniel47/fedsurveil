@@ -1,0 +1,20 @@
+[project]
+name = "fedsurveil"
+version = "0.1.0"
+description = "Privacy-preserving federated learning for image classification: FedAvg, FedProx, SCAFFOLD, differential privacy and communication cost"
+requires-python = ">=3.11"
+
+[tool.setuptools]
+packages = ["fedsurveil"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-q"
