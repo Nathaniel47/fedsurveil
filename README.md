@@ -2,7 +2,7 @@
 
 A simulation of federated learning across 5–20 clinics or field sites. It trains one image classifier without pooling the raw images, and compares FedAvg, FedProx and SCAFFOLD against central training. It adds differential privacy, a simulated secure aggregation, a membership-inference check and a communication-cost analysis, with a Streamlit dashboard.
 
-Status: repo setup (step 2) and data pipeline (step 3) done; no experiments yet. See [PLAN.md](PLAN.md) for the design.
+Status: repo setup (step 2), data pipeline (step 3) and the non-IID FedAvg simulator (step 4) are built; the real training runs are still to do on a free GPU. See [PLAN.md](PLAN.md) for the design.
 
 This is a single-machine simulation on tiny public images. It makes no clinical claims, and its secure aggregation is simulated masking, not real cryptography.
 
@@ -30,7 +30,16 @@ Docker: `docker compose up` serves the dashboard on http://localhost:8501.
 
 ## Training (Kaggle, Colab or a local GPU)
 
-Training needs PyTorch, Opacus and Flower: `pip install -r requirements-ml.txt`. Runs write JSONL logs to `runs/`, and the dashboard reads those. Notebook runners live in `notebooks/`.
+Training needs PyTorch, Opacus and Flower: `pip install -r requirements-ml.txt`. Runs write JSONL logs to `runs/`, and the dashboard reads those.
+
+Step 4 runner: [notebooks/01_noniid_fedavg.ipynb](notebooks/01_noniid_fedavg.ipynb) (turn on a GPU, keep `SMOKE = True` for the first run). Or one run from the command line:
+
+```bash
+python -m fedsurveil.fl.simulate --dataset bloodmnist --algorithm fedavg --alpha 0.1 --num-sites 10 --rounds 30
+python -m fedsurveil.fl.simulate --dataset bloodmnist --algorithm central --rounds 30
+```
+
+Tests that need torch skip themselves when torch is missing, so CI (no torch) runs the rest.
 
 ## Build the data
 

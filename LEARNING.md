@@ -38,3 +38,32 @@ Training saves logs to files and the dashboard only reads them. That is why a lo
 **How to check it.** `pytest` (16 tests: splits are disjoint, cover every image, repeat exactly for the same seed, get more skewed as alpha falls, and detect a corrupted file), then the three commands in the README.
 
 **Reading.** Hsu et al. 2019, "Measuring the Effects of Non-Identical Data Distribution for Federated Visual Classification" (arXiv): the paper that introduced this Dirichlet split.
+
+## Step 4: Core feature (non-IID sites and FedAvg)
+
+**What was built.** The simulator for "5-20 sites with realistic class imbalance". `python -m fedsurveil.fl.simulate` takes a dataset, a number of sites and a Dirichlet alpha, and runs either FedAvg across the sites or a central baseline that trains one model on all the pooled images. Each round it logs global accuracy, macro-F1, the accuracy at every site, and the bytes sent, to a JSONL file in `runs/`. The first line of each log records the settings, library versions and git commit, so any result can be traced back.
+
+**How one FedAvg round works.**
+1. The server sends the global model to the chosen sites.
+2. Each site trains its own copy on its own images for a few epochs. Nothing but the model leaves the site.
+3. Each site sends back the *change* it made (its new weights minus the global weights).
+4. The server adds the average of the changes to the global model, weighting each site by how many images it has. A site with 4x the data counts 4x.
+
+**Why per-site accuracy matters.** One global accuracy hides unfairness: a model can score 90% overall and fail at the one small clinic whose patients look different. So each site gets its own evaluation set drawn from the global test images, with the same class mix as that site's training data. The log reports the mean, the worst site and the spread.
+
+**Why group norm, not batch norm.** Batch norm computes statistics from each training batch. When sites hold different classes, those statistics differ a lot between sites, and averaging them gives a muddled model. Group norm works on one image at a time, so it does not have this problem (and it is also needed later for differential privacy). A test checks that no batch-norm layer slips in.
+
+**Why the central baseline.** It is the best case: one model that sees everything. The gap between it and FedAvg is the cost of keeping data at the sites. A fair comparison gives both the same number of passes over the data per round.
+
+**Why bytes are counted.** Every round, every chosen site downloads and uploads a full model. The small CNN is about 379 KB, so 10 sites cost about 7.6 MB per round (3.8 MB down, 3.8 MB up). This is measured from the real weights, not estimated, and later steps compare it with compressed updates.
+
+**What was checked.** 19 new tests (35 in total, pytest). The aggregation maths is checked by hand (a size-weighted mean, and one site gives back exactly that site's model). Training is deterministic for a fixed seed, and two runs with the same seed log identical numbers. On a toy dataset the model learns, the byte counts match the number of sites chosen, and the baseline sends no traffic. A one-minute CPU run on 400 real BloodMNIST images confirmed the real data path and log format work. Its accuracy (about 19%) means nothing: it only proves the plumbing.
+
+**Not done yet, and why.** The real experiment (does non-IID visibly hurt FedAvg, compared with the central baseline, at alpha 0.1, 0.5 and 100?) has not been run. You have no usable GPU and CPU-only runs are too slow, so it is set up as a notebook, `notebooks/01_noniid_fedavg.ipynb`, to run on Kaggle or Colab. Until that runs, there are no accuracy results, and PLAN.md's week-2 check ("does non-IID visibly hurt?") is still open.
+
+**How to run and check it.** `pytest` for the tests. For the experiment, open the notebook on Kaggle with the GPU on, run it once with `SMOKE = True`, then set it to `False`. It zips the logs in `runs/`.
+
+**Reading.**
+- McMahan et al. 2017, "Communication-Efficient Learning of Deep Networks from Decentralized Data" (arXiv): the FedAvg paper.
+- Hsu et al. 2019, "Measuring the Effects of Non-Identical Data Distribution for Federated Visual Classification" (arXiv): why non-IID data hurts and how the Dirichlet split models it.
+- Wu and He 2018, "Group Normalization" (arXiv): why it replaces batch norm here.
