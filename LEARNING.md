@@ -33,7 +33,7 @@ Training saves logs to files and the dashboard only reads them. That is why a lo
 
 **Problems the report found.** BloodMNIST has 8 duplicate training images and 5 training images that also appear in the test set. That is a small leak (5 of 3,421 test images, 0.15%), but it is real, so it is recorded rather than hidden, and results on BloodMNIST should be read with it in mind. PathMNIST and OrganAMNIST showed no overlap. OrganAMNIST has a 4.5x gap between its largest and smallest class, so macro-F1 is reported next to accuracy.
 
-**Not done yet.** IP102 is not downloaded: it is 3 GB from Google Drive and only about 9.7 GB of disk was free. The loader and subset builder are tested on synthetic images, but no real IP102 numbers exist yet.
+**IP102 added.** The official download (75,222 images, 102 classes) was extracted, and the builder kept the 10 classes with the most training images and resized them to 64 px: 17,926 train, 2,984 val and 8,972 test images (a 300 MB file, gitignored). The class mix is uneven (4.1x between the largest and smallest class) and there is 1 duplicate training image, so macro-F1 is reported too. With the 3 MedMNIST sets that makes 36 saved splits. At alpha 0.1 the smallest of the 10 sites holds only 40 images, which is a deliberately extreme case.
 
 **How to check it.** `pytest` (16 tests: splits are disjoint, cover every image, repeat exactly for the same seed, get more skewed as alpha falls, and detect a corrupted file), then the three commands in the README.
 

@@ -104,9 +104,43 @@ Site partitions (10 sites, seed 0):
 | 0.5 | 1483 | 2678 | 7456 | 10.7 | 0.39 |
 | 100 | 1620 | 3307 | 6031 | 11.0 | 0.18 |
 
+## ip102
+
+| Split | Images | Shape | dtype |
+|---|---|---|---|
+| train | 17926 | (64, 64, 3) | uint8 |
+| val | 2984 | (64, 64, 3) | uint8 |
+| test | 8972 | (64, 64, 3) | uint8 |
+
+Classes: 10. Train class counts: [989, 1018, 2456, 962, 845, 1138, 840, 3186, 3048, 3444].
+
+Imbalance (largest / smallest class in train): 4.1x.
+
+Quality checks:
+
+- duplicates within train: 1
+- train val overlap: 0
+- train test overlap: 0
+- constant images: 0
+- label range ok: True
+
+Sample records (first 3 train items; pixel summary only):
+
+- index 0: label 0, shape (64, 64, 3), pixel mean 63.3, min 5, max 188
+- index 1: label 0, shape (64, 64, 3), pixel mean 215.8, min 25, max 255
+- index 2: label 0, shape (64, 64, 3), pixel mean 205.4, min 2, max 255
+
+Site partitions (10 sites, seed 0):
+
+| alpha | smallest site | median site | largest site | classes per site (mean) | dominant class share (mean) |
+|---|---|---|---|---|---|
+| 0.1 | 40 | 1563 | 5182 | 7.0 | 0.56 |
+| 0.5 | 315 | 2081 | 3219 | 9.5 | 0.37 |
+| 100 | 868 | 1653 | 3124 | 10.0 | 0.19 |
+
 ## Quality problems found
 
 - bloodmnist: 8 duplicate train images
 - bloodmnist: 5 train images also in test
 - bloodmnist: 3 train images also in val
-- IP102 is not included yet: it is a manual 3 GB download (see README).
+- ip102: 1 duplicate train images
