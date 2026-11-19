@@ -17,6 +17,7 @@ import numpy as np
 import torch
 
 from fedsurveil import config
+from fedsurveil.comms.compress import UpdateCompressor
 from fedsurveil.comms.meter import round_bytes, secagg_bytes, state_bytes
 from fedsurveil.data.load import ImageSet, load_ip102_subset, load_medmnist
 from fedsurveil.data.partition import class_matrix, dirichlet_partition
@@ -30,7 +31,12 @@ from fedsurveil.fl.scaffold import (
     zero_controls,
 )
 from fedsurveil.models.cnn import build_model, default_model_name
-from fedsurveil.privacy.client_dp import client_level_epsilon, sampled_epsilon
+from fedsurveil.privacy.client_dp import (
+    client_level_epsilon,
+    flatten,
+    sampled_epsilon,
+    unflatten,
+)
 from fedsurveil.privacy.dp_sgd import local_train_dp
 from fedsurveil.privacy.membership import membership_auroc
 from fedsurveil.privacy.pipeline import private_aggregate
@@ -59,6 +65,8 @@ class RunConfig:
     site_dp_clip: float = 1.0  # sample-level DP-SGD: per-image gradient clip
     secagg: bool = False  # simulated secure aggregation (pairwise masking)
     mia: bool = False  # run a membership-inference check on the final model
+    compress: str = "none"  # update compression: "none", "int8" or "topk"
+    topk_fraction: float = 0.1  # share of weights kept by top-k compression
 
 
 def run_name(cfg: RunConfig) -> str:
@@ -70,6 +78,10 @@ def run_name(cfg: RunConfig) -> str:
         tags += f"_sdp-n{cfg.site_dp_noise:g}"
     if cfg.secagg:
         tags += "_secagg"
+    if cfg.compress == "int8":
+        tags += "_cmp-int8"
+    if cfg.compress == "topk":
+        tags += f"_cmp-topk{cfg.topk_fraction:g}"
     return f"{cfg.dataset}_{algo}{tags}_sites{cfg.num_sites}_alpha{cfg.alpha:g}_seed{cfg.seed}"
 
 
@@ -128,6 +140,10 @@ def run(
         raise ValueError("fedprox needs --prox-mu > 0")
     if cfg.algorithm == "central" and (cfg.dp_clip or cfg.site_dp_noise or cfg.secagg):
         raise ValueError("privacy options only apply to federated algorithms")
+    if cfg.compress != "none" and (cfg.algorithm in ("central", "scaffold") or cfg.secagg):
+        raise ValueError(
+            "compression needs a FedAvg/FedProx run and cannot be combined with secagg"
+        )
     if cfg.dp_noise > 0 and cfg.dp_clip <= 0:
         raise ValueError("--dp-noise needs --dp-clip > 0")
     if cfg.algorithm == "scaffold" and (cfg.dp_clip > 0 or cfg.site_dp_noise > 0):
@@ -150,6 +166,7 @@ def run(
     model_bytes = state_bytes(model.state_dict())
     rng = np.random.default_rng(cfg.seed + 1)
     site_dp_history: list[list[tuple[float, float, int]]] = [[] for _ in range(cfg.num_sites)]
+    compressor = UpdateCompressor(cfg.compress, cfg.num_sites, cfg.topk_fraction)
     scaffold = cfg.algorithm == "scaffold"
     if scaffold:
         c_server = zero_controls(model)
@@ -198,6 +215,7 @@ def run(
                     k_: v.detach().cpu().clone() for k_, v in model.state_dict().items()
                 }
                 deltas, sizes, control_deltas = [], [], []
+                up_bytes = 0
                 for site in chosen:
                     local = copy.deepcopy(model)
                     n_site = len(parts[site])
@@ -230,7 +248,12 @@ def run(
                             prox_mu=cfg.prox_mu if cfg.algorithm == "fedprox" else 0.0,
                             control=(c_server, c_sites[site]) if scaffold else None,
                         )
-                    deltas.append(state_delta(local.state_dict(), global_state))
+                    delta = state_delta(local.state_dict(), global_state)
+                    if cfg.compress != "none":
+                        decoded, nbytes = compressor(int(site), flatten(delta))
+                        delta = unflatten(decoded, delta)
+                        up_bytes += nbytes
+                    deltas.append(delta)
                     sizes.append(n_site)
                     if scaffold:
                         new_c, delta_c = update_site_control(
@@ -262,6 +285,8 @@ def run(
                 traffic = round_bytes(model_bytes, len(chosen), 2 if scaffold else 1)
                 if cfg.secagg:
                     traffic["bytes_up"] += secagg_bytes(len(chosen))
+                if cfg.compress != "none":
+                    traffic["bytes_up"] = up_bytes
             record = {"type": "round", "round": rnd, **traffic}
             record.update(_evaluate(model, data, site_idx, device, k))
             if cfg.algorithm != "central":

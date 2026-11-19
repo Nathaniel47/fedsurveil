@@ -147,3 +147,27 @@ Reports and charts always say which one a number is about.
 **How to run it.** `streamlit run app/dashboard.py`, or `docker compose up`.
 
 **Reading.** The Streamlit documentation page on caching (`st.cache_data`): why the files are loaded once and not on every click.
+
+## Step 5.4: Communication cost for low-bandwidth sites
+
+**Why it matters.** A clinic or field site in a low-bandwidth area may have a link of 0.1 to 1 Mbit/s. The small CNN here is 379 KB, so one dense update takes about 30 seconds to upload on a 0.1 Mbit/s link, and every site has to do that every round. The number of rounds, and the size of each upload, decide whether federated learning is practical there at all.
+
+**What was built.**
+- **Compression** (`--compress int8` or `--compress topk --topk-fraction 0.1`): `int8` stores each weight in one byte plus one shared scale, about 4x smaller. `topk` sends only the largest 10% (or 1%) of the weights, each with its position, so 10% costs about 20% of the dense size (5x smaller) and 1% about 50x smaller. The simulator logs the compressed bytes each round, so the cost is measured, not guessed.
+- **Error feedback** for top-k: what is dropped this round is remembered at the site and added to the next round's update, so nothing is lost for good, only delayed. Without it top-k usually hurts accuracy badly. A test checks that sent plus remembered always equals everything put in.
+- **A report** (`python -m fedsurveil.eval.comms_report`, writes `results/comms_report.md`) with two parts: the exact bytes one site uploads under each scheme, and for every logged run the rounds, megabytes and hours to reach 80% and 85% accuracy on 2G, 3G and 4G-speed links.
+
+**What the numbers say so far (BloodMNIST, seed 0, no compression).** Reaching 80% accuracy took 11 rounds (83 MB in total) with near-IID sites and 13 rounds (99 MB) at alpha 0.5. On a 0.1 Mbit/s link that is roughly 0.2 hours of transfer per site, and at alpha 0.1 the run never reached 80%. Non-IID data costs bandwidth as well as accuracy. SCAFFOLD sends twice as much per round as FedAvg.
+
+**Honest limits.**
+- The link speeds are illustrative assumptions (sites work in parallel, a fixed latency per transfer, no protocol overhead), not measurements of any real network.
+- **No compressed run has been trained yet.** The sizes in the report are exact, but whether int8 or top-k costs accuracy or extra rounds is unmeasured until `notebooks/04_compression.ipynb` runs on a GPU.
+- Compression is applied to the model update only (not to the download of the global model), and it is not combined with secure aggregation (masked numbers cannot be sparsified) or SCAFFOLD. With client-level DP the update is compressed first and clipped afterwards, which keeps the privacy bound valid.
+
+**What was checked (18 new tests).** int8 error is at most half a quantization step, the byte counts match the formulas exactly, top-k keeps exactly the largest entries (and at least one), error feedback conserves the total update, and an int8 run in the simulator uploads about a quarter of the dense bytes and still learns a toy task. The report's time arithmetic is checked on a hand-worked example.
+
+**How to run it.** `pytest tests/test_compress.py tests/test_comms.py`, `python -m fedsurveil.eval.comms_report`, then the notebook on a Colab T4.
+
+**Reading.**
+- Konecny et al. 2016, "Federated Learning: Strategies for Improving Communication Efficiency" (arXiv).
+- Stich et al. 2018, "Sparsified SGD with Memory" (arXiv): why error feedback works.

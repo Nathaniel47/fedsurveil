@@ -2,7 +2,7 @@
 
 A simulation of federated learning across 5–20 clinics or field sites. It trains one image classifier without pooling the raw images, and compares FedAvg, FedProx and SCAFFOLD against central training. It adds differential privacy, a simulated secure aggregation, a membership-inference check and a communication-cost analysis, with a Streamlit dashboard.
 
-Status: data pipeline, FedAvg/FedProx/SCAFFOLD, differential privacy, simulated secure aggregation and the dashboard are built. BloodMNIST FedAvg vs central is run (3 seeds); FedProx, SCAFFOLD, privacy and PathMNIST/IP102 runs are still to do on a free GPU. See [PLAN.md](PLAN.md) for the design.
+Status: data pipeline, FedAvg/FedProx/SCAFFOLD, differential privacy, simulated secure aggregation and the dashboard are built. BloodMNIST FedAvg vs central is run (3 seeds); FedProx, SCAFFOLD, privacy, compression and PathMNIST/IP102 runs are still to do on a free GPU (notebooks 02-04). See [PLAN.md](PLAN.md) for the design.
 
 This is a single-machine simulation on tiny public images. It makes no clinical claims, and its secure aggregation is simulated masking, not real cryptography.
 
@@ -38,6 +38,8 @@ Step 4 runner: [notebooks/01_noniid_fedavg.ipynb](notebooks/01_noniid_fedavg.ipy
 python -m fedsurveil.fl.simulate --dataset bloodmnist --algorithm fedavg --alpha 0.1 --num-sites 10 --rounds 30
 python -m fedsurveil.fl.simulate --dataset bloodmnist --algorithm central --rounds 30
 ```
+
+Other commands: `streamlit run app/dashboard.py` (replay dashboard) and `python -m fedsurveil.eval.comms_report` (writes results/comms_report.md). Options on the simulator: `--algorithm fedavg|fedprox|scaffold|central`, `--dp-clip/--dp-noise` (client-level DP), `--site-dp-noise` (DP-SGD), `--secagg` (simulated), `--compress int8|topk`, `--mia`.
 
 Tests that need torch skip themselves when torch is missing, so CI (no torch) runs the rest.
 

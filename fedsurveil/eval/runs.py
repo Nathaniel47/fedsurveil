@@ -60,6 +60,10 @@ def load_log(path: Path) -> Run:
         algo += f"+DP-SGD(sigma={cfg['site_dp_noise']:g})"
     if cfg.get("secagg"):
         algo += "+secagg(sim)"
+    if cfg.get("compress", "none") == "int8":
+        algo += "+int8"
+    if cfg.get("compress", "none") == "topk":
+        algo += f"+top{cfg.get('topk_fraction', 0):g}"
     rounds = []
     for r in (r for r in rows if r["type"] == "round"):
         row = dict(r)
