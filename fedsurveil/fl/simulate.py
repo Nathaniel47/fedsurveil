@@ -21,21 +21,28 @@ from fedsurveil.comms.meter import round_bytes, state_bytes
 from fedsurveil.data.load import ImageSet, load_ip102_subset, load_medmnist
 from fedsurveil.data.partition import class_matrix, dirichlet_partition
 from fedsurveil.eval.metrics import accuracy, macro_f1, site_eval_indices, spread
-from fedsurveil.fl.client import local_train, predict
+from fedsurveil.fl.client import local_train, num_steps, predict
 from fedsurveil.fl.fedavg import fedavg_aggregate, state_delta
+from fedsurveil.fl.scaffold import (
+    effective_lr,
+    update_server_control,
+    update_site_control,
+    zero_controls,
+)
 from fedsurveil.models.cnn import build_model, default_model_name
 
 
 @dataclass
 class RunConfig:
     dataset: str = "bloodmnist"
-    algorithm: str = "fedavg"  # "fedavg" or "central"
+    algorithm: str = "fedavg"  # "fedavg", "fedprox", "scaffold" or "central"
     num_sites: int = 10
     alpha: float = 0.5
     rounds: int = 30
     local_epochs: int = 1
     lr: float = 0.05
     momentum: float = 0.0
+    prox_mu: float = 0.0  # FedProx strength; only used when algorithm == "fedprox"
     batch_size: int = 64
     sites_per_round: int | None = None  # None = every site, every round
     site_eval_size: int = 500
@@ -45,7 +52,8 @@ class RunConfig:
 
 
 def run_name(cfg: RunConfig) -> str:
-    return f"{cfg.dataset}_{cfg.algorithm}_sites{cfg.num_sites}_alpha{cfg.alpha:g}_seed{cfg.seed}"
+    algo = f"fedprox-mu{cfg.prox_mu:g}" if cfg.algorithm == "fedprox" else cfg.algorithm
+    return f"{cfg.dataset}_{algo}_sites{cfg.num_sites}_alpha{cfg.alpha:g}_seed{cfg.seed}"
 
 
 def _git_commit() -> str | None:
@@ -97,8 +105,10 @@ def run(
     device: str | None = None,
     out_dir: Path | None = None,
 ) -> Path:
-    if cfg.algorithm not in ("fedavg", "central"):
-        raise ValueError(f"algorithm {cfg.algorithm!r} is not implemented yet")
+    if cfg.algorithm not in config.ALGORITHMS + ("central",):
+        raise ValueError(f"unknown algorithm {cfg.algorithm!r}")
+    if cfg.algorithm == "fedprox" and cfg.prox_mu <= 0:
+        raise ValueError("fedprox needs --prox-mu > 0")
     device = device or ("cuda" if torch.cuda.is_available() else "cpu")
     data = data or load_dataset(cfg.dataset)
     if cfg.limit:
@@ -116,6 +126,11 @@ def run(
     model = build_model(default_model_name(cfg.dataset), channels, k).to(device)
     model_bytes = state_bytes(model.state_dict())
     rng = np.random.default_rng(cfg.seed + 1)
+    scaffold = cfg.algorithm == "scaffold"
+    if scaffold:
+        c_server = zero_controls(model)
+        c_sites = [zero_controls(model) for _ in range(cfg.num_sites)]
+        lr_eff = effective_lr(cfg.lr, cfg.momentum)
 
     out_dir = out_dir or config.RUNS_DIR
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -158,9 +173,10 @@ def run(
                 global_state = {
                     k_: v.detach().cpu().clone() for k_, v in model.state_dict().items()
                 }
-                deltas, sizes = [], []
+                deltas, sizes, control_deltas = [], [], []
                 for site in chosen:
                     local = copy.deepcopy(model)
+                    n_site = len(parts[site])
                     local_train(
                         local,
                         data.x_train[parts[site]],
@@ -171,11 +187,26 @@ def run(
                         seed=cfg.seed * 100003 + rnd * 1009 + int(site),
                         device=device,
                         momentum=cfg.momentum,
+                        prox_mu=cfg.prox_mu if cfg.algorithm == "fedprox" else 0.0,
+                        control=(c_server, c_sites[site]) if scaffold else None,
                     )
                     deltas.append(state_delta(local.state_dict(), global_state))
-                    sizes.append(len(parts[site]))
+                    sizes.append(n_site)
+                    if scaffold:
+                        new_c, delta_c = update_site_control(
+                            c_sites[site],
+                            c_server,
+                            [global_state[k_] for k_ in global_state],
+                            [p.detach().cpu() for p in local.parameters()],
+                            num_steps(n_site, cfg.batch_size, cfg.local_epochs),
+                            lr_eff,
+                        )
+                        c_sites[site] = new_c
+                        control_deltas.append(delta_c)
                 model.load_state_dict(fedavg_aggregate(global_state, deltas, sizes))
-                traffic = round_bytes(model_bytes, len(chosen))
+                if scaffold:
+                    c_server = update_server_control(c_server, control_deltas, cfg.num_sites)
+                traffic = round_bytes(model_bytes, len(chosen), 2 if scaffold else 1)
             record = {"type": "round", "round": rnd, **traffic}
             record.update(_evaluate(model, data, site_idx, device, k))
             log.write(json.dumps(record) + "\n")

@@ -67,3 +67,27 @@ Training saves logs to files and the dashboard only reads them. That is why a lo
 - McMahan et al. 2017, "Communication-Efficient Learning of Deep Networks from Decentralized Data" (arXiv): the FedAvg paper.
 - Hsu et al. 2019, "Measuring the Effects of Non-Identical Data Distribution for Federated Visual Classification" (arXiv): why non-IID data hurts and how the Dirichlet split models it.
 - Wu and He 2018, "Group Normalization" (arXiv): why it replaces batch norm here.
+
+## Step 5.1: FedProx and SCAFFOLD
+
+**What was built.** Two more ways to fight client drift, selectable with `--algorithm fedprox --prox-mu 0.1` or `--algorithm scaffold`, next to FedAvg and the central baseline.
+
+**The problem they address.** When a site holds mostly one class, its local training pulls the model toward "always predict that class". Averaging such models gives a worse model than any sensible compromise. Step 4's check showed how bad this gets (alpha 0.1: about 60% vs 95% central).
+
+**FedProx.** Adds a spring: during local training, the loss also penalises moving away from the global model, with strength `mu`. The bigger `mu`, the less each site can wander. Too big and the sites barely learn anything new, so `mu` has to be tuned (the notebook tries 0.01, 0.1 and 1.0). Cost: no extra communication.
+
+**SCAFFOLD.** Each site keeps a "control variate", an estimate of the direction its own data pushes the model. The server keeps the average of these. During local training each gradient is corrected by (server average - this site's estimate), which cancels the part of the push that comes from the site's skewed data. After training, the site updates its estimate from how far its model actually moved. Cost: every round sends the control variates too, so SCAFFOLD **uses twice the bandwidth** of FedAvg (the byte counter reflects this).
+
+**Two honest simplifications.**
+- SCAFFOLD's formula is derived for plain SGD. With momentum 0.9 I use the long-run step size `lr / (1 - momentum)` in the formula, which is an approximation. If SCAFFOLD misbehaves in the GPU runs, run it with momentum 0 to check.
+- FedProx and SCAFFOLD are compared at the settings tuned for FedAvg, not tuned separately.
+
+**What was checked (15 new tests).** FedProx with a large `mu` ends closer to the starting weights than without it, and `mu = 0` changes nothing. SCAFFOLD with all-zero control variates equals plain training, the control-variate update matches the paper's formula on a hand-worked number, and **a single-site SCAFFOLD run gives exactly the same accuracies as FedAvg**, which is what the maths says must happen. SCAFFOLD sends exactly twice the bytes. Both new methods learn a toy task.
+
+**Not done yet.** The real comparison (FedAvg vs FedProx vs SCAFFOLD vs central on BloodMNIST) needs a GPU: `notebooks/02_fedprox_scaffold.ipynb` runs it. There are no accuracy results for FedProx or SCAFFOLD yet.
+
+**How to run it.** `pytest tests/test_algorithms.py`, then open the notebook on Colab with a T4.
+
+**Reading.**
+- Li et al. 2020, "Federated Optimization in Heterogeneous Networks" (arXiv): FedProx.
+- Karimireddy et al. 2020, "SCAFFOLD: Stochastic Controlled Averaging for Federated Learning" (arXiv).
