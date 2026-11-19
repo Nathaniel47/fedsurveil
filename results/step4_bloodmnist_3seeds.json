@@ -1,0 +1,85 @@
+{
+  "_note": "Per-run values from the Colab T4 runs (BloodMNIST, 10 sites, 30 rounds, 2 local epochs, lr 0.02, momentum 0.9). Tuple order: final_acc, final_macro_f1, final_worst_site_acc, mean_acc_of_last_5_rounds. Seed 0 per-round curves are in step4_bloodmnist_seed0.json; seeds 1-2 curves were printed in Colab but not saved here.",
+  "runs": {
+    "central": {
+      "seed0": {
+        "final_acc": 0.9477,
+        "final_macro_f1": 0.9411,
+        "final_worst_site_acc": 0.94,
+        "last5_mean_acc": 0.9461
+      },
+      "seed1": {
+        "final_acc": 0.9307,
+        "final_macro_f1": 0.9225,
+        "final_worst_site_acc": 0.904,
+        "last5_mean_acc": 0.9462
+      },
+      "seed2": {
+        "final_acc": 0.945,
+        "final_macro_f1": 0.9432,
+        "final_worst_site_acc": 0.926,
+        "last5_mean_acc": 0.951
+      }
+    },
+    "fedavg_a100": {
+      "seed0": {
+        "final_acc": 0.9027,
+        "final_macro_f1": 0.8843,
+        "final_worst_site_acc": 0.898,
+        "last5_mean_acc": 0.8958
+      },
+      "seed1": {
+        "final_acc": 0.9012,
+        "final_macro_f1": 0.8843,
+        "final_worst_site_acc": 0.884,
+        "last5_mean_acc": 0.8969
+      },
+      "seed2": {
+        "final_acc": 0.9211,
+        "final_macro_f1": 0.9083,
+        "final_worst_site_acc": 0.906,
+        "last5_mean_acc": 0.9166
+      }
+    },
+    "fedavg_a0.5": {
+      "seed0": {
+        "final_acc": 0.8807,
+        "final_macro_f1": 0.8521,
+        "final_worst_site_acc": 0.708,
+        "last5_mean_acc": 0.8713
+      },
+      "seed1": {
+        "final_acc": 0.8787,
+        "final_macro_f1": 0.8508,
+        "final_worst_site_acc": 0.762,
+        "last5_mean_acc": 0.8658
+      },
+      "seed2": {
+        "final_acc": 0.8977,
+        "final_macro_f1": 0.8821,
+        "final_worst_site_acc": 0.816,
+        "last5_mean_acc": 0.8886
+      }
+    },
+    "fedavg_a0.1": {
+      "seed0": {
+        "final_acc": 0.5364,
+        "final_macro_f1": 0.4478,
+        "final_worst_site_acc": 0.056,
+        "last5_mean_acc": 0.5649
+      },
+      "seed1": {
+        "final_acc": 0.6972,
+        "final_macro_f1": 0.5753,
+        "final_worst_site_acc": 0.146,
+        "last5_mean_acc": 0.6224
+      },
+      "seed2": {
+        "final_acc": 0.7071,
+        "final_macro_f1": 0.6083,
+        "final_worst_site_acc": 0.094,
+        "last5_mean_acc": 0.6177
+      }
+    }
+  }
+}
