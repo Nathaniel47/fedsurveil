@@ -2,7 +2,7 @@
 
 A simulation of federated learning across 5–20 clinics or field sites. It trains one image classifier without pooling the raw images, and compares FedAvg, FedProx and SCAFFOLD against central training. It adds differential privacy, a simulated secure aggregation, a membership-inference check and a communication-cost analysis, with a Streamlit dashboard.
 
-Status: repo setup (step 2), data pipeline (step 3) and the non-IID FedAvg simulator (step 4) are built; the real training runs are still to do on a free GPU. See [PLAN.md](PLAN.md) for the design.
+Status: data pipeline, FedAvg/FedProx/SCAFFOLD, differential privacy, simulated secure aggregation and the dashboard are built. BloodMNIST FedAvg vs central is run (3 seeds); FedProx, SCAFFOLD, privacy and PathMNIST/IP102 runs are still to do on a free GPU. See [PLAN.md](PLAN.md) for the design.
 
 This is a single-machine simulation on tiny public images. It makes no clinical claims, and its secure aggregation is simulated masking, not real cryptography.
 

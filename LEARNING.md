@@ -126,3 +126,24 @@ Reports and charts always say which one a number is about.
 - McMahan et al. 2018, "Learning Differentially Private Recurrent Language Models" (arXiv): client-level DP for federated averaging.
 - Bonawitz et al. 2017, "Practical Secure Aggregation for Privacy-Preserving Machine Learning".
 - Yeom et al. 2018, "Privacy Risk in Machine Learning: Analyzing the Connection to Overfitting" (arXiv): the loss-threshold attack.
+
+## Step 5.3: Training dashboard with per-site accuracy
+
+**What was built.** A Streamlit dashboard (`streamlit run app/dashboard.py`) that replays logged runs. It trains nothing, so it runs on any laptop or free host with no GPU. It reads two kinds of files: full logs in `runs/` (written by the simulator) and compact result files in `results/` (the numbers copied from the Colab runs). The loading code lives in `fedsurveil/eval/runs.py` and uses no torch, so it is tested in CI.
+
+**What you can see.**
+- **Training:** global accuracy and macro-F1 for any set of runs, a slider to replay up to a given round, a "Play replay" button that animates the accuracy curves as if training were live, and "rounds to reach X% accuracy".
+- **Per-site accuracy:** worst-site and mean-site curves, a site-by-round heatmap (full logs only), and final accuracy per site next to how many images each site holds. This is the view that shows a model failing one clinic while the global number looks fine.
+- **Data split:** a site-by-class heatmap of the Dirichlet split, so you can see what "non-IID" looks like for the run.
+- **Privacy and cost:** accuracy plotted against total megabytes sent, and epsilon over rounds, labelled client-level or sample-level.
+- **Summary table:** one row per run, with accuracy, macro-F1, worst site, megabytes, epsilon and the membership-inference score where they exist.
+
+**Why "live" means replay.** A free host has no GPU and cannot train a model while you watch. Replaying a saved log round by round looks the same to a viewer and costs nothing to host, which is the plan from PLAN.md.
+
+**What the dashboard shows right now.** Only the 4 BloodMNIST runs from seed 0 (central and FedAvg at 3 alphas), because those are the only results saved so far. Per-round per-site accuracy was not saved for them (only the worst, mean and final per-site numbers), so the site-by-round heatmap stays empty until runs are re-saved as full logs. Nothing is invented to fill gaps. Raw IP102 images are never shown.
+
+**What was checked (12 new tests).** The loader reads the log format and the compact format, labels runs with their privacy options, prefers a full log over a compact copy of the same run, skips broken or empty files, and counts megabytes and rounds-to-target correctly. A headless run of the dashboard on the committed results finishes without errors. **I have not looked at the page in a browser**, so the layout and the replay animation are untested by eye.
+
+**How to run it.** `streamlit run app/dashboard.py`, or `docker compose up`.
+
+**Reading.** The Streamlit documentation page on caching (`st.cache_data`): why the files are loaded once and not on every click.

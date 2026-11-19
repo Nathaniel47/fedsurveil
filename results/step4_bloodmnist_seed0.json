@@ -1,4 +1,5 @@
 {
+  "_model_bytes": 378912,
   "_note": "Copied from the Colab printout of runs/*.jsonl (Tesla T4, torch 2.14.1+cu130). Curve rows: [round, global_acc, macro_f1, worst_site_acc, mean_site_acc]. Settings: 10 sites, 30 rounds, 2 local epochs, lr 0.02, momentum 0.9, batch 64, seed 0, fedsurveil commit at the time of the Step 4 notebook fix.",
   "bloodmnist_central_sites10_alpha100_seed0": {
     "site_sizes": [1147, 979, 1549, 1092, 838, 1245, 2047, 1721, 749, 592],
