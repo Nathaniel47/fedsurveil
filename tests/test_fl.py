@@ -142,10 +142,5 @@ def test_central_baseline_has_no_traffic_and_learns(tmp_path):
     assert rounds[-1]["global_acc"] > 0.6
 
 
-def test_unimplemented_algorithms_are_rejected(tmp_path):
-    with pytest.raises(ValueError):
-        run(RunConfig(algorithm="scaffold"), data=synthetic(), out_dir=tmp_path)
-
-
 def test_state_bytes_counts_four_bytes_per_float():
     assert state_bytes({"a": torch.zeros(10), "b": torch.zeros(2, 3)}) == 64

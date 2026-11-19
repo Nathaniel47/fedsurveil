@@ -91,3 +91,38 @@ Training saves logs to files and the dashboard only reads them. That is why a lo
 **Reading.**
 - Li et al. 2020, "Federated Optimization in Heterogeneous Networks" (arXiv): FedProx.
 - Karimireddy et al. 2020, "SCAFFOLD: Stochastic Controlled Averaging for Federated Learning" (arXiv).
+
+## Step 5.2: Differential privacy and secure aggregation
+
+**What was built.** Three optional privacy layers for the federated runs, plus a way to measure leakage. All are switches on the same command: `--dp-clip 1.0 --dp-noise 1.0` (client-level DP), `--site-dp-noise 1.0` (sample-level DP-SGD), `--secagg` (simulated secure aggregation) and `--mia` (membership-inference check).
+
+**Two different promises, easy to mix up.**
+- **Client-level DP** (`--dp-clip`, `--dp-noise`) protects a whole *site*. Someone looking at the final model cannot tell whether clinic X took part in training at all. Each site's update is clipped to a maximum length C, the server averages the clipped updates with equal weight, and adds random noise sized to hide any one site's contribution.
+- **Sample-level DP-SGD** (`--site-dp-noise`, uses Opacus) protects a single *image* inside a site: each image's gradient is clipped and noise is added at every training step. It says nothing about whether the site took part.
+Reports and charts always say which one a number is about.
+
+**What epsilon means.** Epsilon is the privacy "budget" spent: smaller is more private, and every round spends more of it. The code logs epsilon each round (with delta fixed at 1e-5). Roughly, an epsilon around 1 is strong protection and values in the tens are weak. More noise gives a smaller epsilon but a less accurate model, which is the privacy-accuracy trade-off the GPU notebook measures. Client-level epsilon uses an exact formula when every site takes part each round and Opacus' accountant when only some do. In the partial case it is an approximation, because the accountant assumes each site is picked independently, while we pick a fixed number.
+
+**Secure aggregation, simulated.** Each pair of sites shares a random mask. One site adds it and the other subtracts it, so each site's message on its own looks like random numbers, but the masks cancel when the server adds everything up, and the server learns only the sum. This is a **simulation on one machine, not real cryptography**: no key exchange, no authentication, and no handling of a site dropping out mid-round. What it does show truthfully is the trick and its cost (each site sends a secret to every other site, so the extra traffic grows with the square of the number of sites). The arithmetic is on whole numbers so the masks cancel exactly.
+
+**How the pieces fit.** The order each round is: clip, equal-weight average (done through the masked sum if `--secagg` is on), then noise. Adding the noise after the secure sum is the natural arrangement: the server only ever sees the total, and the noise protects the total.
+
+**Membership-inference check.** A simple attack guesses that an image was in the training set when the model's loss on it is low. Its AUROC is 0.5 if the attack is no better than chance. It is a measurement of our own model on public benchmark data. A low value does not prove privacy, only that this simple attack found nothing, and DP is what gives the actual guarantee.
+
+**Choices and limits to remember.**
+- SCAFFOLD is not combined with DP: its control variates are extra data that would need their own privacy analysis.
+- Secure aggregation and update compression are not combined: masked numbers are dense random values and cannot be compressed or sparsified.
+- Opacus' secure random numbers are turned off for speed, as it warns. Fine for experiments, not for production.
+- The noise and clip settings have not been tuned yet. The clip value C is chosen by the notebook from the typical update size.
+
+**What was checked (24 new tests).** Clipping shortens long updates and leaves short ones alone. The noise has exactly the intended spread (measured on a large vector). The closed-form epsilon agrees with Opacus' accountant to within 5%, more noise gives a smaller epsilon and more rounds a bigger one, and partial participation costs less than full. Masks cancel *exactly* in whole-number arithmetic, a single masked update has no measurable correlation with the real one, and the secure sum equals the plain sum. Without any privacy options the pipeline equals plain FedAvg. DP-SGD really changes the model weights and logs its accountant history. Invalid combinations are rejected.
+
+**Not done yet.** No accuracy-versus-epsilon results exist: `notebooks/03_privacy.ipynb` runs the grid on a GPU (three noise levels, DP-SGD, secure aggregation, membership check on every run).
+
+**How to run it.** `pytest tests/test_privacy.py`, then the notebook on a Colab T4.
+
+**Reading.**
+- Abadi et al. 2016, "Deep Learning with Differential Privacy" (arXiv): DP-SGD.
+- McMahan et al. 2018, "Learning Differentially Private Recurrent Language Models" (arXiv): client-level DP for federated averaging.
+- Bonawitz et al. 2017, "Practical Secure Aggregation for Privacy-Preserving Machine Learning".
+- Yeom et al. 2018, "Privacy Risk in Machine Learning: Analyzing the Connection to Overfitting" (arXiv): the loss-threshold attack.

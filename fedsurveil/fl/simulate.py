@@ -17,7 +17,7 @@ import numpy as np
 import torch
 
 from fedsurveil import config
-from fedsurveil.comms.meter import round_bytes, state_bytes
+from fedsurveil.comms.meter import round_bytes, secagg_bytes, state_bytes
 from fedsurveil.data.load import ImageSet, load_ip102_subset, load_medmnist
 from fedsurveil.data.partition import class_matrix, dirichlet_partition
 from fedsurveil.eval.metrics import accuracy, macro_f1, site_eval_indices, spread
@@ -30,6 +30,10 @@ from fedsurveil.fl.scaffold import (
     zero_controls,
 )
 from fedsurveil.models.cnn import build_model, default_model_name
+from fedsurveil.privacy.client_dp import client_level_epsilon, sampled_epsilon
+from fedsurveil.privacy.dp_sgd import local_train_dp
+from fedsurveil.privacy.membership import membership_auroc
+from fedsurveil.privacy.pipeline import private_aggregate
 
 
 @dataclass
@@ -49,11 +53,24 @@ class RunConfig:
     seed: int = 0
     limit: int | None = None  # smoke tests only: use a random subset of the training set
     min_site_size: int = 10
+    dp_clip: float = 0.0  # client-level DP: clip each site's update to this L2 norm (0 = off)
+    dp_noise: float = 0.0  # client-level DP: noise multiplier sigma (needs dp_clip > 0)
+    site_dp_noise: float = 0.0  # sample-level DP-SGD in each site: noise multiplier (0 = off)
+    site_dp_clip: float = 1.0  # sample-level DP-SGD: per-image gradient clip
+    secagg: bool = False  # simulated secure aggregation (pairwise masking)
+    mia: bool = False  # run a membership-inference check on the final model
 
 
 def run_name(cfg: RunConfig) -> str:
     algo = f"fedprox-mu{cfg.prox_mu:g}" if cfg.algorithm == "fedprox" else cfg.algorithm
-    return f"{cfg.dataset}_{algo}_sites{cfg.num_sites}_alpha{cfg.alpha:g}_seed{cfg.seed}"
+    tags = ""
+    if cfg.dp_clip > 0:
+        tags += f"_cdp-c{cfg.dp_clip:g}-n{cfg.dp_noise:g}"
+    if cfg.site_dp_noise > 0:
+        tags += f"_sdp-n{cfg.site_dp_noise:g}"
+    if cfg.secagg:
+        tags += "_secagg"
+    return f"{cfg.dataset}_{algo}{tags}_sites{cfg.num_sites}_alpha{cfg.alpha:g}_seed{cfg.seed}"
 
 
 def _git_commit() -> str | None:
@@ -109,6 +126,12 @@ def run(
         raise ValueError(f"unknown algorithm {cfg.algorithm!r}")
     if cfg.algorithm == "fedprox" and cfg.prox_mu <= 0:
         raise ValueError("fedprox needs --prox-mu > 0")
+    if cfg.algorithm == "central" and (cfg.dp_clip or cfg.site_dp_noise or cfg.secagg):
+        raise ValueError("privacy options only apply to federated algorithms")
+    if cfg.dp_noise > 0 and cfg.dp_clip <= 0:
+        raise ValueError("--dp-noise needs --dp-clip > 0")
+    if cfg.algorithm == "scaffold" and (cfg.dp_clip > 0 or cfg.site_dp_noise > 0):
+        raise ValueError("SCAFFOLD is not combined with DP here (control variates not private)")
     device = device or ("cuda" if torch.cuda.is_available() else "cpu")
     data = data or load_dataset(cfg.dataset)
     if cfg.limit:
@@ -126,6 +149,7 @@ def run(
     model = build_model(default_model_name(cfg.dataset), channels, k).to(device)
     model_bytes = state_bytes(model.state_dict())
     rng = np.random.default_rng(cfg.seed + 1)
+    site_dp_history: list[list[tuple[float, float, int]]] = [[] for _ in range(cfg.num_sites)]
     scaffold = cfg.algorithm == "scaffold"
     if scaffold:
         c_server = zero_controls(model)
@@ -177,19 +201,35 @@ def run(
                 for site in chosen:
                     local = copy.deepcopy(model)
                     n_site = len(parts[site])
-                    local_train(
-                        local,
-                        data.x_train[parts[site]],
-                        data.y_train[parts[site]],
-                        epochs=cfg.local_epochs,
-                        lr=cfg.lr,
-                        batch_size=cfg.batch_size,
-                        seed=cfg.seed * 100003 + rnd * 1009 + int(site),
-                        device=device,
-                        momentum=cfg.momentum,
-                        prox_mu=cfg.prox_mu if cfg.algorithm == "fedprox" else 0.0,
-                        control=(c_server, c_sites[site]) if scaffold else None,
-                    )
+                    site_seed = cfg.seed * 100003 + rnd * 1009 + int(site)
+                    if cfg.site_dp_noise > 0:
+                        site_dp_history[site] += local_train_dp(
+                            local,
+                            data.x_train[parts[site]],
+                            data.y_train[parts[site]],
+                            epochs=cfg.local_epochs,
+                            lr=cfg.lr,
+                            batch_size=cfg.batch_size,
+                            seed=site_seed,
+                            noise_multiplier=cfg.site_dp_noise,
+                            max_grad_norm=cfg.site_dp_clip,
+                            device=device,
+                            momentum=cfg.momentum,
+                        )
+                    else:
+                        local_train(
+                            local,
+                            data.x_train[parts[site]],
+                            data.y_train[parts[site]],
+                            epochs=cfg.local_epochs,
+                            lr=cfg.lr,
+                            batch_size=cfg.batch_size,
+                            seed=site_seed,
+                            device=device,
+                            momentum=cfg.momentum,
+                            prox_mu=cfg.prox_mu if cfg.algorithm == "fedprox" else 0.0,
+                            control=(c_server, c_sites[site]) if scaffold else None,
+                        )
                     deltas.append(state_delta(local.state_dict(), global_state))
                     sizes.append(n_site)
                     if scaffold:
@@ -203,13 +243,49 @@ def run(
                         )
                         c_sites[site] = new_c
                         control_deltas.append(delta_c)
-                model.load_state_dict(fedavg_aggregate(global_state, deltas, sizes))
+                privacy_info: dict = {}
+                if cfg.dp_clip > 0 or cfg.secagg:
+                    new_state, privacy_info = private_aggregate(
+                        global_state,
+                        deltas,
+                        sizes,
+                        clip=cfg.dp_clip,
+                        noise_multiplier=cfg.dp_noise,
+                        secagg=cfg.secagg,
+                        seed=cfg.seed * 100003 + rnd,
+                    )
+                else:
+                    new_state = fedavg_aggregate(global_state, deltas, sizes)
+                model.load_state_dict(new_state)
                 if scaffold:
                     c_server = update_server_control(c_server, control_deltas, cfg.num_sites)
                 traffic = round_bytes(model_bytes, len(chosen), 2 if scaffold else 1)
+                if cfg.secagg:
+                    traffic["bytes_up"] += secagg_bytes(len(chosen))
             record = {"type": "round", "round": rnd, **traffic}
             record.update(_evaluate(model, data, site_idx, device, k))
+            if cfg.algorithm != "central":
+                record.update(privacy_info)
+                if cfg.dp_noise > 0:
+                    record["eps_client"] = client_level_epsilon(
+                        cfg.dp_noise, len(chosen), cfg.num_sites, rnd, config.DP_DELTA
+                    )
+                if cfg.site_dp_noise > 0:
+                    used = [h for h in site_dp_history if h]
+                    record["eps_sample_max"] = max(
+                        sampled_epsilon(h, config.DP_DELTA) for h in used
+                    )
             log.write(json.dumps(record) + "\n")
+        if cfg.mia:
+            auc = membership_auroc(
+                model,
+                (data.x_train, data.y_train),
+                (data.x_test, data.y_test),
+                seed=cfg.seed,
+                device=device,
+            )
+            summary = {"type": "summary", "mia_auroc": auc, "delta": config.DP_DELTA}
+            log.write(json.dumps(summary) + "\n")
     return path
 
 
@@ -217,8 +293,12 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     defaults = RunConfig()
     for name, value in asdict(defaults).items():
-        kind = type(value) if value is not None else int
-        parser.add_argument(f"--{name.replace('_', '-')}", type=kind, default=value)
+        flag = "--" + name.replace("_", "-")
+        if isinstance(value, bool):
+            parser.add_argument(flag, action="store_true", default=value)
+        else:
+            kind = type(value) if value is not None else int
+            parser.add_argument(flag, type=kind, default=value)
     args = parser.parse_args()
     cfg = RunConfig(**{k_.replace("-", "_"): v for k_, v in vars(args).items()})
     print(run(cfg))

@@ -15,3 +15,12 @@ def round_bytes(model_bytes: int, num_sites: int, payload_factor: int = 1) -> di
     """
     total = model_bytes * num_sites * payload_factor
     return {"bytes_down": total, "bytes_up": total}
+
+
+def secagg_bytes(num_sites: int, key_bytes: int = 32) -> int:
+    """Extra upload for the simulated secure aggregation: one shared secret per pair of sites.
+
+    Each site sends key_bytes to every other site (relayed by the server). The masked update
+    itself is the same size as a plain one (a 32-bit integer per weight).
+    """
+    return num_sites * (num_sites - 1) * key_bytes
