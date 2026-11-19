@@ -59,7 +59,7 @@ Training saves logs to files and the dashboard only reads them. That is why a lo
 
 **What was checked.** 19 new tests (35 in total, pytest). The aggregation maths is checked by hand (a size-weighted mean, and one site gives back exactly that site's model). Training is deterministic for a fixed seed, and two runs with the same seed log identical numbers. On a toy dataset the model learns, the byte counts match the number of sites chosen, and the baseline sends no traffic. A one-minute CPU run on 400 real BloodMNIST images confirmed the real data path and log format work. Its accuracy (about 19%) means nothing: it only proves the plumbing.
 
-**Not done yet, and why.** The real experiment (does non-IID visibly hurt FedAvg, compared with the central baseline, at alpha 0.1, 0.5 and 100?) has not been run. You have no usable GPU and CPU-only runs are too slow, so it is set up as a notebook, `notebooks/01_noniid_fedavg.ipynb`, to run on Kaggle or Colab. Until that runs, there are no accuracy results, and PLAN.md's week-2 check ("does non-IID visibly hurt?") is still open.
+**Result of the check (BloodMNIST, seed 0 only).** The experiment ran on a free Colab T4 and non-IID data clearly hurts: central training reaches 94.8%, FedAvg on near-IID sites (alpha 100) 90.3%, alpha 0.5 reaches 88.1% (but its worst site is only 71%), and alpha 0.1 reaches only 53.6% with a worst site near 0%. Details and caveats (one seed, 30 rounds, untuned) are in `results/step4_noniid_check.md`. PathMNIST, IP102 and more seeds are not run yet.
 
 **How to run and check it.** `pytest` for the tests. For the experiment, open the notebook on Kaggle with the GPU on, run it once with `SMOKE = True`, then set it to `False`. It zips the logs in `runs/`.
 
