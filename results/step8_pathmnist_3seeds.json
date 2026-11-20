@@ -1,0 +1,189 @@
+{
+ "_note": "Per-run final-round values from a Colab T4 (PathMNIST, 10 sites, 30 rounds, 2 local epochs, lr 0.02, momentum 0.9, batch 64, small CNN with group norm, nothing re-tuned for this dataset; via scripts/run_datasets.py). Runs 1-11 of 24 came from a first Colab session at git commit 8b5a619 that dropped after run 11; runs 12-24 were run in a second session at commit 350e848 with `--start 12` (same settings and seeds, only the resume option was added). Group names: central; fedavg_a<alpha>; fedprox-mu0.1_a<alpha>; scaffold_a<alpha>. bytes_up_round is total bytes uploaded by all 10 sites in one round. Per-round curves were not saved. Note: scaffold_a0.1 is unstable: seed2 reached 65.1% (worst site 6.2%) against 76.2% and 84.3% for seeds 0 and 1.",
+ "runs": {
+  "central": {
+   "seed0": {
+    "final_acc": 0.8737,
+    "final_macro_f1": 0.8392,
+    "final_worst_site_acc": 0.774,
+    "last5_mean_acc": 0.8702,
+    "bytes_up_round": 0
+   },
+   "seed1": {
+    "final_acc": 0.865,
+    "final_macro_f1": 0.8172,
+    "final_worst_site_acc": 0.736,
+    "last5_mean_acc": 0.8682,
+    "bytes_up_round": 0
+   },
+   "seed2": {
+    "final_acc": 0.8546,
+    "final_macro_f1": 0.8125,
+    "final_worst_site_acc": 0.67,
+    "last5_mean_acc": 0.8591,
+    "bytes_up_round": 0
+   }
+  },
+  "fedavg_a0.1": {
+   "seed0": {
+    "final_acc": 0.8064,
+    "final_macro_f1": 0.7367,
+    "final_worst_site_acc": 0.488,
+    "last5_mean_acc": 0.7955,
+    "bytes_up_round": 3794280
+   },
+   "seed1": {
+    "final_acc": 0.8195,
+    "final_macro_f1": 0.7643,
+    "final_worst_site_acc": 0.522,
+    "last5_mean_acc": 0.8155,
+    "bytes_up_round": 3794280
+   },
+   "seed2": {
+    "final_acc": 0.8492,
+    "final_macro_f1": 0.7971,
+    "final_worst_site_acc": 0.456,
+    "last5_mean_acc": 0.8398,
+    "bytes_up_round": 3794280
+   }
+  },
+  "fedavg_a0.5": {
+   "seed0": {
+    "final_acc": 0.8691,
+    "final_macro_f1": 0.8201,
+    "final_worst_site_acc": 0.712,
+    "last5_mean_acc": 0.8624,
+    "bytes_up_round": 3794280
+   },
+   "seed1": {
+    "final_acc": 0.8632,
+    "final_macro_f1": 0.8113,
+    "final_worst_site_acc": 0.724,
+    "last5_mean_acc": 0.8699,
+    "bytes_up_round": 3794280
+   },
+   "seed2": {
+    "final_acc": 0.8635,
+    "final_macro_f1": 0.8175,
+    "final_worst_site_acc": 0.684,
+    "last5_mean_acc": 0.8684,
+    "bytes_up_round": 3794280
+   }
+  },
+  "fedavg_a100": {
+   "seed0": {
+    "final_acc": 0.8848,
+    "final_macro_f1": 0.8407,
+    "final_worst_site_acc": 0.832,
+    "last5_mean_acc": 0.8739,
+    "bytes_up_round": 3794280
+   },
+   "seed1": {
+    "final_acc": 0.8657,
+    "final_macro_f1": 0.8167,
+    "final_worst_site_acc": 0.8,
+    "last5_mean_acc": 0.867,
+    "bytes_up_round": 3794280
+   },
+   "seed2": {
+    "final_acc": 0.8603,
+    "final_macro_f1": 0.8119,
+    "final_worst_site_acc": 0.79,
+    "last5_mean_acc": 0.867,
+    "bytes_up_round": 3794280
+   }
+  },
+  "fedprox-mu0.1_a0.1": {
+   "seed0": {
+    "final_acc": 0.7763,
+    "final_macro_f1": 0.6574,
+    "final_worst_site_acc": 0.316,
+    "last5_mean_acc": 0.7753,
+    "bytes_up_round": 3794280
+   },
+   "seed1": {
+    "final_acc": 0.7749,
+    "final_macro_f1": 0.6848,
+    "final_worst_site_acc": 0.28,
+    "last5_mean_acc": 0.7726,
+    "bytes_up_round": 3794280
+   },
+   "seed2": {
+    "final_acc": 0.8063,
+    "final_macro_f1": 0.7289,
+    "final_worst_site_acc": 0.338,
+    "last5_mean_acc": 0.7753,
+    "bytes_up_round": 3794280
+   }
+  },
+  "scaffold_a0.1": {
+   "seed0": {
+    "final_acc": 0.7623,
+    "final_macro_f1": 0.6726,
+    "final_worst_site_acc": 0.378,
+    "last5_mean_acc": 0.7588,
+    "bytes_up_round": 7588560
+   },
+   "seed1": {
+    "final_acc": 0.8425,
+    "final_macro_f1": 0.7775,
+    "final_worst_site_acc": 0.462,
+    "last5_mean_acc": 0.8399,
+    "bytes_up_round": 7588560
+   },
+   "seed2": {
+    "final_acc": 0.6506,
+    "final_macro_f1": 0.5369,
+    "final_worst_site_acc": 0.062,
+    "last5_mean_acc": 0.7111,
+    "bytes_up_round": 7588560
+   }
+  },
+  "fedprox-mu0.1_a0.5": {
+   "seed0": {
+    "final_acc": 0.826,
+    "final_macro_f1": 0.7748,
+    "final_worst_site_acc": 0.666,
+    "last5_mean_acc": 0.8288,
+    "bytes_up_round": 3794280
+   },
+   "seed1": {
+    "final_acc": 0.8444,
+    "final_macro_f1": 0.7929,
+    "final_worst_site_acc": 0.654,
+    "last5_mean_acc": 0.8463,
+    "bytes_up_round": 3794280
+   },
+   "seed2": {
+    "final_acc": 0.8262,
+    "final_macro_f1": 0.7808,
+    "final_worst_site_acc": 0.612,
+    "last5_mean_acc": 0.8281,
+    "bytes_up_round": 3794280
+   }
+  },
+  "scaffold_a0.5": {
+   "seed0": {
+    "final_acc": 0.8301,
+    "final_macro_f1": 0.7783,
+    "final_worst_site_acc": 0.654,
+    "last5_mean_acc": 0.8395,
+    "bytes_up_round": 7588560
+   },
+   "seed1": {
+    "final_acc": 0.8426,
+    "final_macro_f1": 0.7807,
+    "final_worst_site_acc": 0.676,
+    "last5_mean_acc": 0.8435,
+    "bytes_up_round": 7588560
+   },
+   "seed2": {
+    "final_acc": 0.8538,
+    "final_macro_f1": 0.8073,
+    "final_worst_site_acc": 0.646,
+    "last5_mean_acc": 0.8584,
+    "bytes_up_round": 7588560
+   }
+  }
+ }
+}
