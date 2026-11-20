@@ -53,3 +53,23 @@ def test_summary_of_a_real_tiny_run(tmp_path):
     assert s["group"] == "fedavg_a1" and s["rounds"] == 6 and s["seed"] == 0
     assert 0 <= s["final_worst_site_acc"] <= 1 and 0 <= s["final_acc"] <= 1
     assert s["bytes_up_round"] > 0
+
+
+def test_start_option_skips_finished_runs(monkeypatch, capsys):
+    import subprocess
+    import sys
+
+    sys.path.insert(0, "scripts")
+    import run_datasets
+
+    calls = []
+
+    def fake_run(cmd, **kw):
+        calls.append(cmd)
+        return subprocess.CompletedProcess(cmd, 1, "", "stop")
+
+    monkeypatch.setattr(run_datasets.subprocess, "run", fake_run)
+    monkeypatch.setattr(sys, "argv", ["run_datasets.py", "pathmnist", "--start", "12"])
+    run_datasets.main()
+    expected = dataset_runs("pathmnist")[11]
+    assert calls[0][-len(expected) :] == expected

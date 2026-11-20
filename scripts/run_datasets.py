@@ -28,12 +28,20 @@ DATASETS = ("organamnist", "pathmnist", "ip102")
 
 
 def main() -> int:
-    if len(sys.argv) != 2 or sys.argv[1] not in DATASETS:
+    argv = sys.argv[1:]
+    start = 1
+    if "--start" in argv:  # resume after a dropped session: skip the first start-1 runs
+        k = argv.index("--start")
+        start = int(argv[k + 1])
+        del argv[k : k + 2]
+    if len(argv) != 1 or argv[0] not in DATASETS:
         print(__doc__)
         return 2
-    dataset = sys.argv[1]
+    dataset = argv[0]
     runs = dataset_runs(dataset)
     for i, args in enumerate(runs, 1):
+        if i < start:
+            continue
         started = time.time()
         done = subprocess.run(
             [sys.executable, "-m", "fedsurveil.fl.simulate", *args],
