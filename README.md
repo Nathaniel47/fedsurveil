@@ -55,6 +55,8 @@ python -m fedsurveil.fl.simulate --dataset bloodmnist --algorithm fedavg --alpha
 python -m fedsurveil.fl.simulate --dataset bloodmnist --algorithm central --rounds 30
 ```
 
+Other datasets: [notebooks/05_other_datasets.ipynb](notebooks/05_other_datasets.ipynb) runs central, FedAvg, FedProx and SCAFFOLD on OrganAMNIST, PathMNIST and the IP102 subset (24 runs each, same settings as BloodMNIST) through `python scripts/run_datasets.py <dataset>`. IP102 is read from the path in `IP102_NPZ_PATH`; it is not downloaded for you.
+
 Other commands: `streamlit run app/dashboard.py` (replay dashboard) and `python -m fedsurveil.eval.comms_report` (writes results/comms_report.md) and `python -m fedsurveil.eval.report` (writes results/results_table.md and the charts). Options on the simulator: `--algorithm fedavg|fedprox|scaffold|central`, `--dp-clip/--dp-noise` (client-level DP), `--site-dp-noise` (DP-SGD), `--secagg` (simulated), `--compress int8|topk`, `--mia`.
 
 Tests that need torch skip themselves when torch is missing, so CI (no torch) runs the rest.
