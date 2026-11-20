@@ -32,6 +32,8 @@ Docker: `docker compose up` serves the dashboard on http://localhost:8501.
 
 Training needs PyTorch, Opacus and Flower: `pip install -r requirements-ml.txt`. Runs write JSONL logs to `runs/`, and the dashboard reads those.
 
+Flower end-to-end demo (CPU is enough, about 5 minutes): `python scripts/run_flower_demo.py` starts a SuperLink and three SuperNodes as separate processes on localhost (no TLS), runs 5 rounds of FedAvg on a 3,000-image BloodMNIST subset (no privacy), and writes `results/flower_demo.json`. It shows the real protocol; every experiment in the results uses the plain-PyTorch simulator instead. The first run makes Flower create `~/.flwr/config.toml`, with a connection named `local-deployment` that points at `127.0.0.1:9093`.
+
 Step 4 runner: [notebooks/01_noniid_fedavg.ipynb](notebooks/01_noniid_fedavg.ipynb) (turn on a GPU, keep `SMOKE = True` for the first run). Or one run from the command line:
 
 ```bash
@@ -61,7 +63,8 @@ IP102 is a manual 3 GB download: get `ip102_v1.1` from the [IP102 repo](https://
 | MedMNIST v2 data | CC-BY-4.0, except DermaMNIST (CC-BY-NC-4.0, not used); not for clinical use | PathMNIST, BloodMNIST, OrganAMNIST |
 | MedMNIST code | Apache-2.0 | `pip install medmnist` (kept below 3.0) |
 | IP102 | "Free for academic usage"; other uses need permission from the authors | 10–20 class subset, 64 px; not redistributed, no images in the public dashboard |
-| Flower, Opacus | Apache-2.0 (to confirm at install) | Flower demo run; DP-SGD |
+| Flower | Apache-2.0 (confirmed for flwr 1.44.0) | Flower demo run |
+| Opacus | Apache-2.0 (to confirm at install) | DP-SGD |
 
 ## Responsible use
 

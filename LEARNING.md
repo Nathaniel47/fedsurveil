@@ -171,3 +171,26 @@ Reports and charts always say which one a number is about.
 **Reading.**
 - Konecny et al. 2016, "Federated Learning: Strategies for Improving Communication Efficiency" (arXiv).
 - Stich et al. 2018, "Sparsified SGD with Memory" (arXiv): why error feedback works.
+
+## Step 6: The Flower end-to-end demo
+
+**Why it matters.** Every experiment so far ran in one Python process: a loop that pretends to be many sites. That is fast and easy to debug, but it never sends a model over a connection. The demo runs the same idea the way a real deployment would, with separate programs that talk over the network, so you can show the real protocol and not only a simulation.
+
+**What was built.** Three small pieces in `fedsurveil/flower_demo/` and one launcher.
+- A **SuperLink** is the hub. A **SuperNode** is one site's agent. Each SuperNode runs a **ClientApp** (`client.py`): it receives the global model, trains on its own share of the data and sends the new weights back. The **ServerApp** (`server.py`) averages the weights with FedAvg and logs the global test accuracy after every round.
+- `common.py` is shared. A site works out its own images from its site number, the number of sites, alpha and the seed, so no images ever travel, only model weights.
+- `scripts/run_flower_demo.py` starts the SuperLink and three SuperNodes, submits the app with `flwr run`, then stops everything. The settings are in `flower_app/pyproject.toml`.
+
+**What the run shows.** Five rounds on 3,000 BloodMNIST images split over 3 sites: global accuracy goes 17%, 20%, 19%, 16%, 41%, 58% (round 0 is the untrained model). It is a protocol demo on a small subset, not a result: it carries no privacy, no comparison and no seeds.
+
+**Honest limits.**
+- No TLS and no SuperNode authentication, all on localhost: a demo, not a secure deployment.
+- It runs plain FedAvg only; FedProx, SCAFFOLD, DP and compression exist only in the simulator.
+- Flower rewrote parts of its own setup on first run: it created `~/.flwr/config.toml` and installed a copy of the app under `~/.flwr/apps/`. Both are outside the repo.
+- The result goes to `results/flower_demo.json`, not `runs/`, because it lacks the per-site accuracies the dashboard expects.
+
+**What was checked (4 new tests).** Sites hold disjoint images and get the same ones on every run, the subset is seeded, a model survives the trip through Flower's array format unchanged, and a site's data loads from the real dataset. The full run was done by hand, since it needs several processes.
+
+**How to run it.** `pytest tests/test_flower_demo.py`, then `python scripts/run_flower_demo.py`.
+
+**Reading.** The Flower documentation page "Run Flower with deployment engine" and the first page of McMahan et al. 2017, "Communication-Efficient Learning of Deep Networks from Decentralized Data" (arXiv), which defines FedAvg.

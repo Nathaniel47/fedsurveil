@@ -1,0 +1,38 @@
+# Flower app definition for the end-to-end demo. The code lives in fedsurveil/flower_demo/ and is
+# imported from the installed fedsurveil package, so this folder holds only the configuration.
+# Run it with: python scripts/run_flower_demo.py
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "fedsurveil-flower-demo"
+version = "0.1.0"
+description = "FedSurveil end-to-end Flower demo (FedAvg over separate processes)"
+license = "Apache-2.0"
+dependencies = ["flwr>=1.9"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["."]
+
+[tool.flwr.app]
+publisher = "fedsurveil"
+
+[tool.flwr.app.components]
+serverapp = "fedsurveil.flower_demo.server:app"
+clientapp = "fedsurveil.flower_demo.client:app"
+
+[tool.flwr.app.config]
+dataset = "bloodmnist"
+alpha = 0.5
+seed = 0
+limit = 3000
+num-sites = 3
+num-server-rounds = 5
+local-epochs = 1
+lr = 0.02
+momentum = 0.9
+
+
+# The SuperLink address (127.0.0.1:9093, no TLS) lives in ~/.flwr/config.toml as the connection
+# "local-deployment", which Flower created from the old [tool.flwr.federations] section on first run.

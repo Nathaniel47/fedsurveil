@@ -1,0 +1,68 @@
+{
+ "meta": {
+  "what": "Flower end-to-end demo: SuperLink + SuperNode processes, FedAvg, no privacy",
+  "config": {
+   "dataset": "bloodmnist",
+   "alpha": 0.5,
+   "seed": 0,
+   "limit": 3000,
+   "num-sites": 3,
+   "num-server-rounds": 5,
+   "local-epochs": 1,
+   "lr": 0.02,
+   "momentum": 0.9
+  },
+  "model_bytes": 378912,
+  "versions": {
+   "python": "3.11.9",
+   "torch": "2.14.1+cpu",
+   "flwr": "1.44.0",
+   "numpy": "2.4.6"
+  },
+  "git_commit": "9dab940"
+ },
+ "rounds": [
+  {
+   "round": 0,
+   "global_acc": 0.16924875767319497,
+   "macro_f1": 0.0361875,
+   "bytes_down": 0,
+   "bytes_up": 0
+  },
+  {
+   "round": 1,
+   "global_acc": 0.19847997661502484,
+   "macro_f1": 0.04822600449525501,
+   "bytes_down": 1136736,
+   "bytes_up": 1136736
+  },
+  {
+   "round": 2,
+   "global_acc": 0.18795673779596608,
+   "macro_f1": 0.060887766757952856,
+   "bytes_down": 1136736,
+   "bytes_up": 1136736
+  },
+  {
+   "round": 3,
+   "global_acc": 0.1639871382636656,
+   "macro_f1": 0.09918076012248289,
+   "bytes_down": 1136736,
+   "bytes_up": 1136736
+  },
+  {
+   "round": 4,
+   "global_acc": 0.4089447529961999,
+   "macro_f1": 0.2549580083974848,
+   "bytes_down": 1136736,
+   "bytes_up": 1136736
+  },
+  {
+   "round": 5,
+   "global_acc": 0.5822858813212511,
+   "macro_f1": 0.41527041610218907,
+   "bytes_down": 1136736,
+   "bytes_up": 1136736
+  }
+ ]
+}
