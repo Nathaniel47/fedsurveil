@@ -194,3 +194,19 @@ Reports and charts always say which one a number is about.
 **How to run it.** `pytest tests/test_flower_demo.py`, then `python scripts/run_flower_demo.py`.
 
 **Reading.** The Flower documentation page "Run Flower with deployment engine" and the first page of McMahan et al. 2017, "Communication-Efficient Learning of Deep Networks from Decentralized Data" (arXiv), which defines FedAvg.
+
+## Step 7: Evaluation and what the results mean
+
+**Why it matters.** A pile of run logs is not a result. This step turns them into one table with spreads across seeds, three charts, and a write-up that says what was not shown.
+
+**What was built.** `python -m fedsurveil.eval.report` reads the saved Step 4 and Step 5 result files and writes `results/results_table.md` and three charts. `docs/REPORT.md` is the write-up. The dashboard has a new tab, "Final results", with the same table and charts. `docs/DEPLOY.md` lists the free-hosting steps and `docs/portfolio_card.md` is the card text.
+
+**What the results say (BloodMNIST only).** Skewed sites hurt the worst-off site most. SCAFFOLD helps under strong skew, FedProx barely helps. With only 10 sites, client-level DP with a meaningful epsilon destroys accuracy. Compression to 10x is cheap, 50x costs about 5 points. The simple membership-inference attack found nothing even without DP, which says the attack is weak, not that the model is safe.
+
+**Honest limits.** One dataset and three seeds. The same seed gave results up to 0.7 points apart on two Colab sessions, so differences near one point are noise. PathMNIST, OrganAMNIST and IP102 were never trained, although the data pipeline handles them.
+
+**What was checked (5 new tests).** Every setting has 3 seeds except the single DP-SGD run, baselines match the Step 4 note, every privacy row names its guarantee and the secure-aggregation row says it is a simulation, and the table and charts are written.
+
+**How to run it.** `pytest tests/test_report.py`, then `python -m fedsurveil.eval.report`.
+
+**Reading.** Hoefler and Belli 2015, "Scientific Benchmarking of Parallel Computing Systems" (the rules for reporting variance honestly apply to ML experiments too).

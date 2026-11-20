@@ -2,9 +2,23 @@
 
 A simulation of federated learning across 5–20 clinics or field sites. It trains one image classifier without pooling the raw images, and compares FedAvg, FedProx and SCAFFOLD against central training. It adds differential privacy, a simulated secure aggregation, a membership-inference check and a communication-cost analysis, with a Streamlit dashboard.
 
-Status: data pipeline, FedAvg/FedProx/SCAFFOLD, differential privacy, simulated secure aggregation and the dashboard are built. BloodMNIST FedAvg vs central is run (3 seeds); FedProx, SCAFFOLD, privacy, compression and PathMNIST/IP102 runs are still to do on a free GPU (notebooks 02-04). See [PLAN.md](PLAN.md) for the design.
+Status: everything in the plan is built and run on BloodMNIST (10 sites, 3 seeds): FedAvg, FedProx, SCAFFOLD, client-level DP, DP-SGD, simulated secure aggregation, a membership-inference check, update compression, a dashboard and a Flower end-to-end demo. **Not done:** PathMNIST, OrganAMNIST and IP102 were not trained, so all results are BloodMNIST only. See [docs/REPORT.md](docs/REPORT.md) for results and limitations, and [PLAN.md](PLAN.md) for the design.
 
 This is a single-machine simulation on tiny public images. It makes no clinical claims, and its secure aggregation is simulated masking, not real cryptography.
+
+## Results at a glance (BloodMNIST, 10 sites, 3 seeds; full table in [results/results_table.md](results/results_table.md))
+
+| Setting | Accuracy | Worst site |
+|---|---|---|
+| Central training | 94.1 ± 0.9% | 92.3 ± 1.8% |
+| FedAvg, near-IID sites (alpha 100) | 90.8 ± 1.1% | 89.6 ± 1.1% |
+| FedAvg, alpha 0.5 | 88.6 ± 1.0% | 76.2 ± 5.4% |
+| FedAvg, alpha 0.1 | 64.7 ± 9.6% | 9.9 ± 4.5% |
+| SCAFFOLD, alpha 0.1 | 71.9 ± 4.6% | 29.6 ± 18.1% |
+| Client-level DP (epsilon 40) | 40.8 ± 10.7% | 14.9 ± 8.4% |
+| top-k 1% compression (50x less upload) | 83.4 ± 1.1% | 66.8 ± 9.8% |
+
+Skewed sites hurt the worst-off site most; SCAFFOLD helps under strong skew; strong privacy costs most of the accuracy on a model this small; compression is cheap to about 10x. Three seeds is few, and the report lists the limits.
 
 ## Run locally (laptop: tests and the dashboard, no GPU)
 
@@ -41,7 +55,7 @@ python -m fedsurveil.fl.simulate --dataset bloodmnist --algorithm fedavg --alpha
 python -m fedsurveil.fl.simulate --dataset bloodmnist --algorithm central --rounds 30
 ```
 
-Other commands: `streamlit run app/dashboard.py` (replay dashboard) and `python -m fedsurveil.eval.comms_report` (writes results/comms_report.md). Options on the simulator: `--algorithm fedavg|fedprox|scaffold|central`, `--dp-clip/--dp-noise` (client-level DP), `--site-dp-noise` (DP-SGD), `--secagg` (simulated), `--compress int8|topk`, `--mia`.
+Other commands: `streamlit run app/dashboard.py` (replay dashboard) and `python -m fedsurveil.eval.comms_report` (writes results/comms_report.md) and `python -m fedsurveil.eval.report` (writes results/results_table.md and the charts). Options on the simulator: `--algorithm fedavg|fedprox|scaffold|central`, `--dp-clip/--dp-noise` (client-level DP), `--site-dp-noise` (DP-SGD), `--secagg` (simulated), `--compress int8|topk`, `--mia`.
 
 Tests that need torch skip themselves when torch is missing, so CI (no torch) runs the rest.
 

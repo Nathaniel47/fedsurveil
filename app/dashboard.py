@@ -96,8 +96,15 @@ if st.sidebar.button("Play replay"):
         )
         time.sleep(0.12)
 
-tab_train, tab_sites, tab_split, tab_cost, tab_table = st.tabs(
-    ["Training", "Per-site accuracy", "Data split", "Privacy and cost", "Summary table"]
+tab_train, tab_sites, tab_split, tab_cost, tab_table, tab_final = st.tabs(
+    [
+        "Training",
+        "Per-site accuracy",
+        "Data split",
+        "Privacy and cost",
+        "Summary table",
+        "Final results (BloodMNIST)",
+    ]
 )
 
 with tab_train:
@@ -205,3 +212,18 @@ with tab_cost:
 with tab_table:
     table = summary_table(chosen)
     st.dataframe(table, width="stretch", hide_index=True)
+
+with tab_final:
+    table_md = ROOT / "results" / "results_table.md"
+    if table_md.exists():
+        st.caption(
+            "Final-round results over 3 seeds from results/results_table.md. Only BloodMNIST was "
+            "run on a GPU; these are simulated sites, not clinical results."
+        )
+        for chart in ("noniid_methods", "privacy_utility", "compression_cost"):
+            image = ROOT / "results" / "charts" / f"{chart}.png"
+            if image.exists():
+                st.image(str(image))
+        st.markdown(table_md.read_text(encoding="utf-8").partition("\n\n")[2])
+    else:
+        st.info("Run `python -m fedsurveil.eval.report` to create the final results table.")
