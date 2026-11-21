@@ -2,7 +2,7 @@
 
 A simulation of federated learning across 5–20 clinics or field sites. It trains one image classifier without pooling the raw images, and compares FedAvg, FedProx and SCAFFOLD against central training. It adds differential privacy, a simulated secure aggregation, a membership-inference check and a communication-cost analysis, with a Streamlit dashboard.
 
-Status: everything in the plan is built and run on BloodMNIST (10 sites, 3 seeds): FedAvg, FedProx, SCAFFOLD, client-level DP, DP-SGD, simulated secure aggregation, a membership-inference check, update compression, a dashboard and a Flower end-to-end demo. **Not done:** PathMNIST, OrganAMNIST and IP102 were not trained, so all results are BloodMNIST only. See [docs/REPORT.md](docs/REPORT.md) for results and limitations, and [PLAN.md](PLAN.md) for the design.
+Status: everything in the plan is built and run on BloodMNIST (10 sites, 3 seeds): FedAvg, FedProx, SCAFFOLD, client-level DP, DP-SGD, simulated secure aggregation, a membership-inference check, update compression, a dashboard and a Flower end-to-end demo. The central / FedAvg / FedProx / SCAFFOLD comparison was repeated on OrganAMNIST and PathMNIST; privacy, compression and the membership-inference check are BloodMNIST only. **Not done yet:** IP102 (waiting for a free Colab GPU). See [docs/REPORT.md](docs/REPORT.md) for results and limitations, and [PLAN.md](PLAN.md) for the design.
 
 This is a single-machine simulation on tiny public images. It makes no clinical claims, and its secure aggregation is simulated masking, not real cryptography.
 
@@ -18,7 +18,7 @@ This is a single-machine simulation on tiny public images. It makes no clinical 
 | Client-level DP (epsilon 40) | 40.8 ± 10.7% | 14.9 ± 8.4% |
 | top-k 1% compression (50x less upload) | 83.4 ± 1.1% | 66.8 ± 9.8% |
 
-Skewed sites hurt the worst-off site most; SCAFFOLD helps under strong skew; strong privacy costs most of the accuracy on a model this small; compression is cheap to about 10x. Three seeds is few, and the report lists the limits.
+Skewed sites hurt the worst-off site most on all three datasets; SCAFFOLD helped under strong skew on BloodMNIST only and was unstable on the other two ([comparison](results/cross_dataset_table.md)); strong privacy costs most of the accuracy on a model this small; compression is cheap to about 10x. Three seeds is few, and the report lists the limits.
 
 ## Run locally (laptop: tests and the dashboard, no GPU)
 

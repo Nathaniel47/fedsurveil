@@ -103,7 +103,7 @@ tab_train, tab_sites, tab_split, tab_cost, tab_table, tab_final = st.tabs(
         "Data split",
         "Privacy and cost",
         "Summary table",
-        "Final results (BloodMNIST)",
+        "Final results",
     ]
 )
 
@@ -217,9 +217,17 @@ with tab_final:
     table_md = ROOT / "results" / "results_table.md"
     if table_md.exists():
         st.caption(
-            "Final-round results over 3 seeds from results/results_table.md. Only BloodMNIST was "
-            "run on a GPU; these are simulated sites, not clinical results."
+            "Final-round results over 3 seeds from results/results_table.md (BloodMNIST, with "
+            "privacy and compression) and results/cross_dataset_table.md (the same comparison on "
+            "the other datasets, shown first). These are simulated sites, not clinical results."
         )
+        cross_md = ROOT / "results" / "cross_dataset_table.md"
+        cross_png = ROOT / "results" / "charts" / "datasets_alpha01.png"
+        if cross_png.exists():
+            st.image(str(cross_png))
+        if cross_md.exists():
+            st.markdown(cross_md.read_text(encoding="utf-8").partition("\n\n")[2])
+        st.subheader("BloodMNIST in detail")
         for chart in ("noniid_methods", "privacy_utility", "compression_cost"):
             image = ROOT / "results" / "charts" / f"{chart}.png"
             if image.exists():

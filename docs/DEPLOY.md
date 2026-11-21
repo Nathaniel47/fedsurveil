@@ -9,7 +9,7 @@ no secrets and no data download. Raw IP102 images are never in the repo or the d
    `Nathaniel47/fedsurveil` (the repo is public).
 2. New app, branch `main`, main file `app/dashboard.py`, Python 3.11 under Advanced settings.
 3. It installs `requirements.txt` (streamlit, plotly, numpy, pandas: no torch). No secrets needed.
-4. Check the "Final results (BloodMNIST)" tab shows three charts and the table.
+4. Check the "Final results" tab shows the charts and the tables.
 
 ## Hugging Face Spaces (alternative)
 

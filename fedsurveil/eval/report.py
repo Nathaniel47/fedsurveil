@@ -18,6 +18,19 @@ from fedsurveil import config
 STEP4 = config.RESULTS_DIR / "step4_bloodmnist_3seeds.json"
 STEP5 = config.RESULTS_DIR / "step5_bloodmnist_3seeds.json"
 TABLE = config.RESULTS_DIR / "results_table.md"
+CROSS_TABLE = config.RESULTS_DIR / "cross_dataset_table.md"
+OTHER_DATASETS = ("organamnist", "pathmnist", "ip102")
+# (label, key in a step8 file, label of the same setting in the BloodMNIST summary)
+CROSS_SETTINGS = (
+    ("Central (pooled data)", "central", "Central (pooled data)"),
+    ("FedAvg, alpha 100", "fedavg_a100", "FedAvg, alpha 100 (near-IID)"),
+    ("FedAvg, alpha 0.5", "fedavg_a0.5", "FedAvg, alpha 0.5"),
+    ("FedAvg, alpha 0.1", "fedavg_a0.1", "FedAvg, alpha 0.1"),
+    ("FedProx mu 0.1, alpha 0.5", "fedprox-mu0.1_a0.5", "FedProx mu 0.1, alpha 0.5"),
+    ("FedProx mu 0.1, alpha 0.1", "fedprox-mu0.1_a0.1", "FedProx mu 0.1, alpha 0.1"),
+    ("SCAFFOLD, alpha 0.5", "scaffold_a0.5", "SCAFFOLD (2x upload), alpha 0.5"),
+    ("SCAFFOLD, alpha 0.1", "scaffold_a0.1", "SCAFFOLD (2x upload), alpha 0.1"),
+)
 CHARTS = config.RESULTS_DIR / "charts"
 MODEL_BYTES = 378_912  # the small CNN, from the run logs
 SITES = 10
@@ -268,6 +281,89 @@ def chart_comms(summary: pd.DataFrame) -> None:
     plt.close(fig)
 
 
+def cross_dataset(summary: pd.DataFrame) -> dict[str, dict[str, dict]]:
+    """Per dataset and setting: per-seed final accuracy and worst-site accuracy.
+
+    BloodMNIST comes from the Step 4 and 5 files; the others from results/step8_<name>_3seeds.json
+    (a dataset whose file is missing is skipped).
+    """
+    out: dict[str, dict[str, dict]] = {"bloodmnist": {}}
+    for label, _, blood in CROSS_SETTINGS:
+        part = summary[summary["setting"] == blood]
+        part = part[part["key"].str.startswith(("s4_", "s5_fedprox", "s5_scaffold"))]
+        row = part.iloc[0]
+        out["bloodmnist"][label] = {
+            "acc": [row["acc"]], "worst": [row["worst"]],
+            "acc_sd": row["acc_sd"], "worst_sd": row["worst_sd"], "n": int(row["seeds"]),
+        }  # fmt: skip
+    for name in OTHER_DATASETS:
+        path = config.RESULTS_DIR / f"step8_{name}_3seeds.json"
+        if not path.exists():
+            continue
+        runs = json.loads(path.read_text(encoding="utf-8"))["runs"]
+        out[name] = {}
+        for label, key, _ in CROSS_SETTINGS:
+            seeds = runs[key].values()
+            accs = [v["final_acc"] for v in seeds]
+            worst = [v["final_worst_site_acc"] for v in seeds]
+            out[name][label] = {
+                "acc": accs, "worst": worst, "acc_sd": _stats(accs)[1],
+                "worst_sd": _stats(worst)[1], "n": len(accs),
+            }  # fmt: skip
+    return out
+
+
+def write_cross_table(data: dict[str, dict[str, dict]]) -> str:
+    lines = [
+        "# Same comparison on every dataset (10 sites, 30 rounds, 3 seeds)",
+        "",
+        "Final-round mean ± standard deviation over seeds 0, 1 and 2 (rough: 3 seeds). "
+        "All datasets use the settings chosen on BloodMNIST; nothing was re-tuned. "
+        "Worst site is the lowest per-site accuracy. No privacy mechanism is on in any row.",
+        "",
+        "| Setting | " + " | ".join(f"{d} acc (%) | {d} worst site (%)" for d in data) + " |",
+        "|---|" + "---|---|" * len(data),
+    ]
+    for label, _, _ in CROSS_SETTINGS:
+        cells = []
+        for d in data:
+            r = data[d][label]
+            cells += [
+                _pm(st.mean(r["acc"]), r["acc_sd"]),
+                _pm(st.mean(r["worst"]), r["worst_sd"]),
+            ]
+        lines.append(f"| {label} | " + " | ".join(cells) + " |")
+    lines.append("")
+    text = "\n".join(lines)
+    CROSS_TABLE.write_text(text, encoding="utf-8")
+    return text
+
+
+def chart_datasets(data: dict[str, dict[str, dict]]) -> None:
+    """Accuracy at alpha 0.1 for FedAvg, FedProx and SCAFFOLD, one panel per dataset."""
+    plt = _plt()
+    fig, axes = plt.subplots(1, len(data), figsize=(3.4 * len(data), 3.8), sharey=False)
+    axes = [axes] if len(data) == 1 else list(axes)
+    methods = ("FedAvg, alpha 0.1", "FedProx mu 0.1, alpha 0.1", "SCAFFOLD, alpha 0.1")
+    short = ("FedAvg", "FedProx", "SCAFFOLD")
+    for ax, (name, d) in zip(axes, data.items(), strict=True):
+        for i, m in enumerate(methods):
+            r = d[m]
+            sd = 0 if r["acc_sd"] != r["acc_sd"] else r["acc_sd"] * 100
+            ax.bar(i, st.mean(r["acc"]) * 100, yerr=sd, capsize=3, color=f"C{i}")
+            ax.plot([i] * len(r["acc"]), [a * 100 for a in r["acc"]], "k.", ms=4)
+        ax.axhline(st.mean(d["Central (pooled data)"]["acc"]) * 100, color="grey", ls="--")
+        ax.set_xticks(range(3), short)
+        ax.set_title(name)
+        ax.set_ylabel("Accuracy (%)")
+    fig.suptitle(
+        "Strongly skewed sites (alpha 0.1): bars = mean ± sd, dots = seeds, dashed = central"
+    )
+    fig.tight_layout()
+    fig.savefig(CHARTS / "datasets_alpha01.png", dpi=150)
+    plt.close(fig)
+
+
 def main() -> None:
     CHARTS.mkdir(parents=True, exist_ok=True)
     runs = load_runs()
@@ -276,7 +372,10 @@ def main() -> None:
     chart_noniid(runs, summary)
     chart_privacy(summary)
     chart_comms(summary)
-    print(f"wrote {TABLE} and 3 charts in {CHARTS}")
+    cross = cross_dataset(summary)
+    write_cross_table(cross)
+    chart_datasets(cross)
+    print(f"wrote {TABLE}, {CROSS_TABLE} and 4 charts in {CHARTS}")
 
 
 if __name__ == "__main__":
