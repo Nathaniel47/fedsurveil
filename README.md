@@ -2,7 +2,7 @@
 
 A simulation of federated learning across 5–20 clinics or field sites. It trains one image classifier without pooling the raw images, and compares FedAvg, FedProx and SCAFFOLD against central training. It adds differential privacy, a simulated secure aggregation, a membership-inference check and a communication-cost analysis, with a Streamlit dashboard.
 
-Status: everything in the plan is built and run on BloodMNIST (10 sites, 3 seeds): FedAvg, FedProx, SCAFFOLD, client-level DP, DP-SGD, simulated secure aggregation, a membership-inference check, update compression, a dashboard and a Flower end-to-end demo. The central / FedAvg / FedProx / SCAFFOLD comparison was repeated on OrganAMNIST and PathMNIST; privacy, compression and the membership-inference check are BloodMNIST only. **Not done yet:** IP102 (waiting for a free Colab GPU). See [docs/REPORT.md](docs/REPORT.md) for results and limitations, and [PLAN.md](PLAN.md) for the design.
+Status: everything in the plan is built and run on BloodMNIST (10 sites, 3 seeds): FedAvg, FedProx, SCAFFOLD, client-level DP, DP-SGD, simulated secure aggregation, a membership-inference check, update compression, a dashboard and a Flower end-to-end demo. The central / FedAvg / FedProx / SCAFFOLD comparison was repeated on OrganAMNIST, PathMNIST and a 10-class IP102 insect-pest subset; privacy, compression and the membership-inference check are BloodMNIST only. See [docs/REPORT.md](docs/REPORT.md) for results and limitations, and [PLAN.md](PLAN.md) for the design.
 
 This is a single-machine simulation on tiny public images. It makes no clinical claims, and its secure aggregation is simulated masking, not real cryptography.
 
@@ -18,7 +18,7 @@ This is a single-machine simulation on tiny public images. It makes no clinical 
 | Client-level DP (epsilon 40) | 40.8 ± 10.7% | 14.9 ± 8.4% |
 | top-k 1% compression (50x less upload) | 83.4 ± 1.1% | 66.8 ± 9.8% |
 
-Skewed sites hurt the worst-off site most on all three datasets; SCAFFOLD helped under strong skew on BloodMNIST only and was unstable on the other two ([comparison](results/cross_dataset_table.md)); strong privacy costs most of the accuracy on a model this small; compression is cheap to about 10x. Three seeds is few, and the report lists the limits.
+Under FedAvg, strongly skewed sites leave the worst site far behind on all four datasets; SCAFFOLD helped under strong skew on BloodMNIST only, was unstable on OrganAMNIST and PathMNIST, and did far worse than FedAvg on the IP102 subset ([comparison](results/cross_dataset_table.md)); strong privacy costs most of the accuracy on a model this small; compression is cheap to about 10x. Three seeds is few, and the report lists the limits.
 
 ## Run locally (laptop: tests and the dashboard, no GPU)
 
@@ -78,7 +78,7 @@ IP102 is a manual 3 GB download: get `ip102_v1.1` from the [IP102 repo](https://
 |---|---|---|
 | MedMNIST v2 data | CC-BY-4.0, except DermaMNIST (CC-BY-NC-4.0, not used); not for clinical use | PathMNIST, BloodMNIST, OrganAMNIST |
 | MedMNIST code | Apache-2.0 | `pip install medmnist` (kept below 3.0) |
-| IP102 | "Free for academic usage"; other uses need permission from the authors | 10–20 class subset, 64 px; not redistributed, no images in the public dashboard |
+| IP102 | "Free for academic usage"; other uses need permission from the authors | 10-class subset, 64 px; not redistributed, no images in the public dashboard |
 | Flower | Apache-2.0 (confirmed for flwr 1.44.0) | Flower demo run |
 | Opacus | Apache-2.0 (to confirm at install) | DP-SGD |
 

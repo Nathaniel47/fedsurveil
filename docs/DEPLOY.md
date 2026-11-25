@@ -20,5 +20,6 @@ in the Space README header. It uses the same `requirements.txt`.
 
 - The dashboard says the secure aggregation is a simulation, and every privacy number names its
   guarantee. Keep that wording if you edit it.
-- Only BloodMNIST results are shown; do not describe the project as covering IP102 yet.
+- IP102 appears as metrics only, for a 10-class subset; do not describe it as all 102 classes.
+  Privacy and compression results are BloodMNIST only.
 - Free hosts put apps to sleep when idle, so the first visit may take a minute.

@@ -1,0 +1,189 @@
+{
+ "_note": "Per-run final-round values from a Colab T4 (IP102 10-class subset at 64 px, SmallResNet with group norm, 10 sites, 30 rounds, 2 local epochs, lr 0.02, momentum 0.9, batch 64, nothing re-tuned for this dataset; via scripts/run_datasets.py at git commit c860cd2). The 24 runs took three Colab sessions because the runtime dropped twice: runs 1-4, runs 5-16 (--start 5) and runs 17-24 (--start 17). Metrics only: IP102 is not redistributed and no images are stored here. Group names: central; fedavg_a<alpha>; fedprox-mu0.1_a<alpha>; scaffold_a<alpha>. bytes_up_round is total bytes uploaded by all 10 sites in one round. Per-round curves were not saved.",
+ "runs": {
+  "central": {
+   "seed0": {
+    "final_acc": 0.5707,
+    "final_macro_f1": 0.5447,
+    "final_worst_site_acc": 0.392,
+    "last5_mean_acc": 0.5919,
+    "bytes_up_round": 0
+   },
+   "seed1": {
+    "final_acc": 0.5847,
+    "final_macro_f1": 0.557,
+    "final_worst_site_acc": 0.462,
+    "last5_mean_acc": 0.588,
+    "bytes_up_round": 0
+   },
+   "seed2": {
+    "final_acc": 0.5751,
+    "final_macro_f1": 0.5607,
+    "final_worst_site_acc": 0.452,
+    "last5_mean_acc": 0.5825,
+    "bytes_up_round": 0
+   }
+  },
+  "fedavg_a0.1": {
+   "seed0": {
+    "final_acc": 0.3589,
+    "final_macro_f1": 0.2267,
+    "final_worst_site_acc": 0.076,
+    "last5_mean_acc": 0.351,
+    "bytes_up_round": 12346000
+   },
+   "seed1": {
+    "final_acc": 0.3342,
+    "final_macro_f1": 0.1708,
+    "final_worst_site_acc": 0.004,
+    "last5_mean_acc": 0.3306,
+    "bytes_up_round": 12346000
+   },
+   "seed2": {
+    "final_acc": 0.4903,
+    "final_macro_f1": 0.4077,
+    "final_worst_site_acc": 0.194,
+    "last5_mean_acc": 0.4895,
+    "bytes_up_round": 12346000
+   }
+  },
+  "fedavg_a0.5": {
+   "seed0": {
+    "final_acc": 0.4182,
+    "final_macro_f1": 0.3289,
+    "final_worst_site_acc": 0.254,
+    "last5_mean_acc": 0.4179,
+    "bytes_up_round": 12346000
+   },
+   "seed1": {
+    "final_acc": 0.3905,
+    "final_macro_f1": 0.3046,
+    "final_worst_site_acc": 0.244,
+    "last5_mean_acc": 0.3877,
+    "bytes_up_round": 12346000
+   },
+   "seed2": {
+    "final_acc": 0.39,
+    "final_macro_f1": 0.2607,
+    "final_worst_site_acc": 0.236,
+    "last5_mean_acc": 0.3806,
+    "bytes_up_round": 12346000
+   }
+  },
+  "fedavg_a100": {
+   "seed0": {
+    "final_acc": 0.4673,
+    "final_macro_f1": 0.3992,
+    "final_worst_site_acc": 0.44,
+    "last5_mean_acc": 0.4628,
+    "bytes_up_round": 12346000
+   },
+   "seed1": {
+    "final_acc": 0.4659,
+    "final_macro_f1": 0.4106,
+    "final_worst_site_acc": 0.418,
+    "last5_mean_acc": 0.4611,
+    "bytes_up_round": 12346000
+   },
+   "seed2": {
+    "final_acc": 0.4774,
+    "final_macro_f1": 0.4191,
+    "final_worst_site_acc": 0.456,
+    "last5_mean_acc": 0.4671,
+    "bytes_up_round": 12346000
+   }
+  },
+  "fedprox-mu0.1_a0.1": {
+   "seed0": {
+    "final_acc": 0.3603,
+    "final_macro_f1": 0.2472,
+    "final_worst_site_acc": 0.1,
+    "last5_mean_acc": 0.3601,
+    "bytes_up_round": 12346000
+   },
+   "seed1": {
+    "final_acc": 0.3956,
+    "final_macro_f1": 0.315,
+    "final_worst_site_acc": 0.016,
+    "last5_mean_acc": 0.3739,
+    "bytes_up_round": 12346000
+   },
+   "seed2": {
+    "final_acc": 0.3918,
+    "final_macro_f1": 0.2933,
+    "final_worst_site_acc": 0.126,
+    "last5_mean_acc": 0.3869,
+    "bytes_up_round": 12346000
+   }
+  },
+  "fedprox-mu0.1_a0.5": {
+   "seed0": {
+    "final_acc": 0.4127,
+    "final_macro_f1": 0.3145,
+    "final_worst_site_acc": 0.272,
+    "last5_mean_acc": 0.4079,
+    "bytes_up_round": 12346000
+   },
+   "seed1": {
+    "final_acc": 0.3751,
+    "final_macro_f1": 0.278,
+    "final_worst_site_acc": 0.202,
+    "last5_mean_acc": 0.3757,
+    "bytes_up_round": 12346000
+   },
+   "seed2": {
+    "final_acc": 0.3845,
+    "final_macro_f1": 0.2521,
+    "final_worst_site_acc": 0.196,
+    "last5_mean_acc": 0.3798,
+    "bytes_up_round": 12346000
+   }
+  },
+  "scaffold_a0.1": {
+   "seed0": {
+    "final_acc": 0.2352,
+    "final_macro_f1": 0.0726,
+    "final_worst_site_acc": 0.008,
+    "last5_mean_acc": 0.2194,
+    "bytes_up_round": 24692000
+   },
+   "seed1": {
+    "final_acc": 0.2588,
+    "final_macro_f1": 0.1497,
+    "final_worst_site_acc": 0.006,
+    "last5_mean_acc": 0.2558,
+    "bytes_up_round": 24692000
+   },
+   "seed2": {
+    "final_acc": 0.1292,
+    "final_macro_f1": 0.0643,
+    "final_worst_site_acc": 0.002,
+    "last5_mean_acc": 0.1979,
+    "bytes_up_round": 24692000
+   }
+  },
+  "scaffold_a0.5": {
+   "seed0": {
+    "final_acc": 0.4195,
+    "final_macro_f1": 0.3237,
+    "final_worst_site_acc": 0.31,
+    "last5_mean_acc": 0.4104,
+    "bytes_up_round": 24692000
+   },
+   "seed1": {
+    "final_acc": 0.3601,
+    "final_macro_f1": 0.2695,
+    "final_worst_site_acc": 0.194,
+    "last5_mean_acc": 0.3819,
+    "bytes_up_round": 24692000
+   },
+   "seed2": {
+    "final_acc": 0.3424,
+    "final_macro_f1": 0.1686,
+    "final_worst_site_acc": 0.104,
+    "last5_mean_acc": 0.3509,
+    "bytes_up_round": 24692000
+   }
+  }
+ }
+}

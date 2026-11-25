@@ -210,3 +210,15 @@ Reports and charts always say which one a number is about.
 **How to run it.** `pytest tests/test_report.py`, then `python -m fedsurveil.eval.report`.
 
 **Reading.** Hoefler and Belli 2015, "Scientific Benchmarking of Parallel Computing Systems" (the rules for reporting variance honestly apply to ML experiments too).
+
+## Step 7b: The same comparison on other datasets
+
+**Why it matters.** A finding from one dataset may be a fact about that dataset, not about the method.
+
+**What was run.** Central training, FedAvg, FedProx and SCAFFOLD on OrganAMNIST, PathMNIST and the 10-class IP102 subset, 3 seeds each (24 runs per dataset), with the BloodMNIST training settings and nothing re-tuned. Free Colab sessions can drop, so `python scripts/run_datasets.py <dataset> --start N` begins at run N and skips the finished ones. IP102 took three sessions and each run took about 11 to 13 minutes on a T4.
+
+**What the results say.** Under FedAvg, strong skew leaves the worst site far behind on all four datasets. SCAFFOLD's gain on BloodMNIST did not repeat: it was unstable on two datasets and did far worse than FedAvg on IP102, where its strong-skew average is close to what guessing the most common class would score. On IP102 even near-IID federated training stays well behind central training.
+
+**Honest limits.** Three seeds, no settings tuned on any new dataset, and the cause of the SCAFFOLD failures was not investigated. IP102 also uses a different model (a small ResNet at 64 px). Only final-round values were saved for these runs.
+
+**A bug found and fixed.** The cross-dataset chart drew one dot for BloodMNIST, its average, although the title says dots are seeds. It now draws all three, and a test checks it.

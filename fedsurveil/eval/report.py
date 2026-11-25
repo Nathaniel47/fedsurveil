@@ -281,7 +281,7 @@ def chart_comms(summary: pd.DataFrame) -> None:
     plt.close(fig)
 
 
-def cross_dataset(summary: pd.DataFrame) -> dict[str, dict[str, dict]]:
+def cross_dataset(runs: pd.DataFrame, summary: pd.DataFrame) -> dict[str, dict[str, dict]]:
     """Per dataset and setting: per-seed final accuracy and worst-site accuracy.
 
     BloodMNIST comes from the Step 4 and 5 files; the others from results/step8_<name>_3seeds.json
@@ -292,8 +292,9 @@ def cross_dataset(summary: pd.DataFrame) -> dict[str, dict[str, dict]]:
         part = summary[summary["setting"] == blood]
         part = part[part["key"].str.startswith(("s4_", "s5_fedprox", "s5_scaffold"))]
         row = part.iloc[0]
+        per_seed = runs[runs["key"] == row["key"]]
         out["bloodmnist"][label] = {
-            "acc": [row["acc"]], "worst": [row["worst"]],
+            "acc": per_seed["acc"].tolist(), "worst": per_seed["worst"].tolist(),
             "acc_sd": row["acc_sd"], "worst_sd": row["worst_sd"], "n": int(row["seeds"]),
         }  # fmt: skip
     for name in OTHER_DATASETS:
@@ -372,7 +373,7 @@ def main() -> None:
     chart_noniid(runs, summary)
     chart_privacy(summary)
     chart_comms(summary)
-    cross = cross_dataset(summary)
+    cross = cross_dataset(runs, summary)
     write_cross_table(cross)
     chart_datasets(cross)
     print(f"wrote {TABLE}, {CROSS_TABLE} and 4 charts in {CHARTS}")

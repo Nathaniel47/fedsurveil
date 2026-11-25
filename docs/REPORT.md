@@ -1,9 +1,10 @@
 # FedSurveil: results and limitations
 
-A single-machine simulation of federated learning across 10 sites, on tiny public medical images.
-It makes no clinical claims. All numbers below come from [results/results_table.md](../results/results_table.md)
-(3 seeds, final round, mean ± standard deviation) and can be rebuilt with
-`python -m fedsurveil.eval.report`.
+A single-machine simulation of federated learning across 10 sites, on small public medical and
+insect-pest images. It makes no clinical claims. The result tables are
+[results/results_table.md](../results/results_table.md) (BloodMNIST) and, for finding 6,
+[results/cross_dataset_table.md](../results/cross_dataset_table.md): final round, mean ± standard
+deviation, 3 seeds unless marked. Both can be rebuilt with `python -m fedsurveil.eval.report`.
 
 ## Setup
 
@@ -13,10 +14,10 @@ It makes no clinical claims. All numbers below come from [results/results_table.
   rate 0.02, momentum 0.9, batch 64. Settings were chosen once and not tuned.
 - **Hardware:** a free Colab Tesla T4. Seeds 0, 1 and 2 fix the split and the initial weights.
 - **Other datasets:** the central / FedAvg / FedProx / SCAFFOLD comparison was repeated on
-  OrganAMNIST (11 classes) and PathMNIST (9 classes) with the same settings, nothing re-tuned
+  OrganAMNIST (11 classes), PathMNIST (9 classes) and a 10-class IP102 insect-pest subset (64 px,
+  a small ResNet with group norm, about 1.2 MB) with the same training settings, nothing re-tuned
   ([results/cross_dataset_table.md](../results/cross_dataset_table.md)). **Privacy, compression and
-  the membership-inference check were run on BloodMNIST only.** The IP102 pest subset has not been
-  trained yet (it needs a Colab GPU session).
+  the membership-inference check were run on BloodMNIST only.**
 
 ## What the results say
 
@@ -71,37 +72,54 @@ either (see Limitations).
 ([results/flower_demo.json](../results/flower_demo.json)). It is a protocol demo with no privacy and
 no comparison, not a result.
 
-![Same comparison on three datasets](../results/charts/datasets_alpha01.png)
+![Same comparison on four datasets](../results/charts/datasets_alpha01.png)
 
-**6. The BloodMNIST drift findings do not all carry over.** Same settings, three datasets, 3 seeds
+**6. The BloodMNIST drift findings do not all carry over.** Same settings, four datasets, 3 seeds
 (accuracy at alpha 0.1; central training in brackets):
 
-| | BloodMNIST (94.1%) | OrganAMNIST (92.9%) | PathMNIST (86.4%) |
-|---|---|---|---|
-| FedAvg | 64.7 ± 9.6% | 84.9 ± 5.9% | 82.5 ± 2.2% |
-| FedProx mu 0.1 | 68.5 ± 9.9% | 80.5 ± 3.4% | 78.6 ± 1.8% |
-| SCAFFOLD | 71.9 ± 4.6% | 74.0 ± 25.8% | 75.2 ± 9.6% |
+| | BloodMNIST (94.1%) | OrganAMNIST (92.9%) | PathMNIST (86.4%) | IP102 subset (57.7%) |
+|---|---|---|---|---|
+| FedAvg | 64.7 ± 9.6% | 84.9 ± 5.9% | 82.5 ± 2.2% | 39.4 ± 8.4% |
+| FedProx mu 0.1 | 68.5 ± 9.9% | 80.5 ± 3.4% | 78.6 ± 1.8% | 38.3 ± 1.9% |
+| SCAFFOLD | 71.9 ± 4.6% | 74.0 ± 25.8% | 75.2 ± 9.6% | 20.8 ± 6.9% |
 
-What holds everywhere: strong skew costs accuracy and the worst site most (worst site at alpha 0.1
-is 9.9%, 62.7% and 48.9% under FedAvg), and at alpha 0.5 FedAvg is within 0 to 6 points of
-central training. What does **not** hold: SCAFFOLD beat FedAvg at alpha 0.1 only on BloodMNIST. On
-the other two it was worse on average, and it is unstable: one OrganAMNIST seed collapsed to 44.2%
-and one PathMNIST seed reached 65.1% (worst site 6.2%), so its large spreads are real, not noise
-around a good mean. FedProx with mu 0.1 was below FedAvg on OrganAMNIST and PathMNIST at both
-alphas. The learning rate was chosen for BloodMNIST and shared by all methods, so a SCAFFOLD
-instability may come from that setting rather than from the method; this was not investigated.
+What holds on all four: under FedAvg the worst site does much worse at alpha 0.1 than the overall
+number suggests (9.9%, 62.7%, 48.9% and 9.1%). On IP102 the overall accuracy hardly moves between
+alpha 0.5 (40.0%) and alpha 0.1 (39.4%) while the worst site falls from 24.5% to 9.1%.
+
+What does **not** hold:
+
+- **FedAvg at alpha 0.5 staying close to central training.** It is within 6 points on the three
+  MedMNIST sets but 17.7 points behind on IP102, where even near-IID sites (47.0%) are 10.7 points
+  behind. Whether more rounds would close this was not tested.
+- **SCAFFOLD helping under strong skew.** It beat FedAvg on average at alpha 0.1 only on BloodMNIST.
+  On OrganAMNIST and PathMNIST it was worse on average and unstable: one OrganAMNIST seed collapsed
+  to 44.2% and one PathMNIST seed reached 65.1% (worst site 6.2%). On IP102 it was below FedAvg on
+  all three seeds. Its mean there, 20.8%, is close to what always guessing the most common test
+  class would score (19.2%), and its mean worst-site accuracy was 0.5%.
+- **FedProx mu 0.1 helping.** It was below FedAvg on average on OrganAMNIST and PathMNIST at both
+  alphas. On IP102 its means are about 1 point lower, and at alpha 0.1 it was ahead on two seeds
+  (one of them only by 0.1 points) and well behind on the third, so no clear difference is shown.
+
+The learning rate was chosen for BloodMNIST and shared by all methods, so the SCAFFOLD failures may
+come from that setting rather than from the method; this was not investigated.
 
 ## Limitations
 
 - **Few datasets, one of them for everything private.** Privacy, compression and the membership
   attack were run on BloodMNIST only. The drift comparison covers three MedMNIST sets (all 28 px
-  medical images) and IP102 is still missing. Finding 6 shows findings can change between datasets.
+  medical images) and one 10-class subset of IP102's 102 classes at 64 px. IP102 also uses a
+  different model, so differences from the other sets cannot be put down to the images alone.
+  Finding 6 shows findings can change between datasets.
 - **Few seeds, rough spreads.** Three seeds (one for DP-SGD) and no confidence intervals. The same
   seed and settings gave final accuracies up to 0.7 points apart in two separate Colab sessions
   (FedAvg at alpha 0.5, seeds 0, 1 and 2: 0.2, 0.7 and 0.1 points), most likely GPU
-  non-determinism, which was not investigated. Differences of about one point are noise. PathMNIST
-  runs 1 to 11 come from a Colab session that dropped and runs 12 to 24 from a second session with
-  the same code and settings.
+  non-determinism, which was not investigated. Differences of about one point are noise.
+- **Interrupted sessions and compact records.** PathMNIST took two Colab sessions (runs 1 to 11 and
+  12 to 24; the code for the second added only the resume option). IP102 took three (runs 1 to 4,
+  5 to 16 and 17 to 24), all at commit c860cd2. For the OrganAMNIST, PathMNIST and IP102 runs only
+  final-round values were saved: the full run logs, with per-round curves and library versions,
+  were not kept.
 - **Not converged, not tuned.** 30 rounds was not enough for FedAvg at alpha 100 to finish improving,
   so its gap to central training is probably overstated. One setting of learning rate, momentum and
   local epochs was used for every method, which may favour some methods over others. FedProx's mu
@@ -115,7 +133,7 @@ instability may come from that setting rather than from the method; this was not
 - **Compression** is applied to the update going up only, and is not combined with secure
   aggregation or SCAFFOLD. Link-speed hours in [results/comms_report.md](../results/comms_report.md)
   are illustrative assumptions, not measurements of any network.
-- **Tiny images, a simulation.** 28 px images, a small model, one machine. Nothing here transfers to
+- **Small images, a simulation.** 28 px and 64 px images, small models, one machine. Nothing here transfers to
   real clinical images or real networks, and the work must not be used for clinical decisions.
 - **Data quirks.** BloodMNIST's test set has 5 images that also appear in training (see
   [results/data_report.md](../results/data_report.md)).

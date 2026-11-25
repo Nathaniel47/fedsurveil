@@ -53,20 +53,22 @@ def test_charts_are_written(tables, tmp_path, monkeypatch):
 
 def test_cross_dataset_table_covers_each_dataset_with_three_seeds(tables, tmp_path, monkeypatch):
     monkeypatch.setattr(report, "CROSS_TABLE", tmp_path / "c.md")
-    data = report.cross_dataset(tables[1])
-    assert {"bloodmnist", "organamnist", "pathmnist"} <= set(data)
+    data = report.cross_dataset(*tables)
+    assert {"bloodmnist", "organamnist", "pathmnist", "ip102"} <= set(data)
     for name, settings in data.items():
         assert len(settings) == len(report.CROSS_SETTINGS)
         for label, r in settings.items():
             assert r["n"] == 3, (name, label)
+            # the chart draws one dot per seed
+            assert len(list(r["acc"])) == 3, (name, label)
     # the SCAFFOLD collapse is in the data, not averaged away
     assert min(data["organamnist"]["SCAFFOLD, alpha 0.1"]["acc"]) < 0.5
     text = report.write_cross_table(data)
-    assert "organamnist acc" in text and "± " in text
+    assert "organamnist acc" in text and "ip102 acc" in text and "± " in text
 
 
 def test_dataset_chart_is_written(tables, tmp_path, monkeypatch):
     pytest.importorskip("matplotlib")
     monkeypatch.setattr(report, "CHARTS", tmp_path)
-    report.chart_datasets(report.cross_dataset(tables[1]))
+    report.chart_datasets(report.cross_dataset(*tables))
     assert (tmp_path / "datasets_alpha01.png").stat().st_size > 5000
