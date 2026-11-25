@@ -1,5 +1,7 @@
 # FedSurveil: Privacy-Preserving Federated Surveillance
 
+**Live dashboard:** https://fedsurveil-smwgy3kxghui5lqha38jve.streamlit.app (results only; a sleeping app may take a minute to wake). The replay tabs show the BloodMNIST seed 0 runs; the comparison across datasets is in the "Final results" tab.
+
 A simulation of federated learning across 5–20 clinics or field sites. It trains one image classifier without pooling the raw images, and compares FedAvg, FedProx and SCAFFOLD against central training. It adds differential privacy, a simulated secure aggregation, a membership-inference check and a communication-cost analysis, with a Streamlit dashboard.
 
 Status: everything in the plan is built and run on BloodMNIST (10 sites, 3 seeds): FedAvg, FedProx, SCAFFOLD, client-level DP, DP-SGD, simulated secure aggregation, a membership-inference check, update compression, a dashboard and a Flower end-to-end demo. The central / FedAvg / FedProx / SCAFFOLD comparison was repeated on OrganAMNIST, PathMNIST and a 10-class IP102 insect-pest subset; privacy, compression and the membership-inference check are BloodMNIST only. See [docs/REPORT.md](docs/REPORT.md) for results and limitations, and [PLAN.md](PLAN.md) for the design.

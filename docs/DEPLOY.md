@@ -5,6 +5,9 @@ no secrets and no data download. Raw IP102 images are never in the repo or the d
 
 ## Streamlit Community Cloud
 
+Deployed on 2026-11-25 at https://fedsurveil-smwgy3kxghui5lqha38jve.streamlit.app (branch `main`, Python 3.11, no secrets).
+The steps used:
+
 1. Sign in at share.streamlit.io with the GitHub account that owns the repo, and grant it access to
    `Nathaniel47/fedsurveil` (the repo is public).
 2. New app, branch `main`, main file `app/dashboard.py`, Python 3.11 under Advanced settings.
