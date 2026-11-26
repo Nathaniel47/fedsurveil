@@ -152,4 +152,5 @@ come from that setting rather than from the method; this was not investigated.
 
 MedMNIST data CC-BY-4.0 (DermaMNIST excluded: CC-BY-NC); MedMNIST code, Flower: Apache-2.0. IP102
 is "free for academic usage": it is not redistributed and no IP102 images appear in the dashboard.
-This repository has no LICENSE file yet.
+This repository's own code is under the MIT licence ([LICENSE](../LICENSE)); that does not
+change the terms of the datasets or libraries.

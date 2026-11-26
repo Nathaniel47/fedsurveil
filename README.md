@@ -76,6 +76,10 @@ IP102 is a manual 3 GB download: get `ip102_v1.1` from the [IP102 repo](https://
 
 ## Data and licences (checked 2026-11-18)
 
+The code in this repository is under the MIT licence ([LICENSE](LICENSE)). That does not cover
+the datasets or third-party libraries, which keep their own terms, listed below. In particular, the
+MIT licence gives no extra rights to IP102.
+
 | Data / library | Licence | Use here |
 |---|---|---|
 | MedMNIST v2 data | CC-BY-4.0, except DermaMNIST (CC-BY-NC-4.0, not used); not for clinical use | PathMNIST, BloodMNIST, OrganAMNIST |

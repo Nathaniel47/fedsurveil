@@ -9,7 +9,7 @@ build-backend = "hatchling.build"
 name = "fedsurveil-flower-demo"
 version = "0.1.0"
 description = "FedSurveil end-to-end Flower demo (FedAvg over separate processes)"
-license = "Apache-2.0"
+license = "MIT"
 dependencies = ["flwr>=1.9"]
 
 [tool.hatch.build.targets.wheel]
