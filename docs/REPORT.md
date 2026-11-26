@@ -102,7 +102,8 @@ What does **not** hold:
   (one of them only by 0.1 points) and well behind on the third, so no clear difference is shown.
 
 The learning rate was chosen for BloodMNIST and shared by all methods, so the SCAFFOLD failures may
-come from that setting rather than from the method; this was not investigated.
+come from that setting rather than from the method. They may also come from how SCAFFOLD was run
+with momentum (see Limitations). Neither was investigated.
 
 ## Limitations
 
@@ -124,6 +125,12 @@ come from that setting rather than from the method; this was not investigated.
   so its gap to central training is probably overstated. One setting of learning rate, momentum and
   local epochs was used for every method, which may favour some methods over others. FedProx's mu
   and the DP clipping norm (set to the median update norm from a short pilot run) were not tuned.
+- **SCAFFOLD with momentum is an approximation.** SCAFFOLD is derived for plain SGD, but every
+  SCAFFOLD result here used momentum 0.9, with `lr / (1 - momentum)` as the step size in the
+  control-variate formula. No SCAFFOLD comparison run without momentum was made, so the effect of
+  this choice on any result, including the BloodMNIST gain, is unknown. The test that one-site
+  SCAFFOLD matches FedAvg does not check it: it runs without momentum, and with one site the
+  correction is always zero.
 - **Worst-site numbers are noisy.** Each site is scored on 500 test images sampled from the shared
   test set, and sites differ between seeds.
 - **Privacy is narrow.** Epsilon uses delta 1e-5 and is reported per guarantee (client-level or
